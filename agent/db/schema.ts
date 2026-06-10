@@ -212,6 +212,20 @@ export const retrievalCache = pgTable(
   (t) => [index("retrieval_cache_provider_idx").on(t.provider)],
 );
 
+/** Offline snippet-validator runs (R2) — templates proven against live VideoDB API. */
+export const snippetValidations = pgTable(
+  "snippet_validations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    templateId: text("template_id").notNull(), // ∈ snippet registry
+    status: text("status").notNull(), // passed | failed
+    output: text("output"), // tail of stdout+stderr from the live run
+    durationMs: integer("duration_ms").notNull(),
+    ranAt: timestamp("ran_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("snippet_validations_template_idx").on(t.templateId)],
+);
+
 /** Single-row operational flags (R6 kill-switch lives here, not in env). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
@@ -230,6 +244,7 @@ export const allTables = {
   auditLog,
   githubRequests,
   retrievalCache,
+  snippetValidations,
   settings,
 } as const;
 
@@ -242,3 +257,4 @@ export type CostEvent = typeof costEvents.$inferSelect;
 export type AuditEntry = typeof auditLog.$inferSelect;
 export type GithubRequest = typeof githubRequests.$inferSelect;
 export type RetrievalCacheEntry = typeof retrievalCache.$inferSelect;
+export type SnippetValidation = typeof snippetValidations.$inferSelect;

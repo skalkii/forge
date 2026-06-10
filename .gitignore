@@ -42,3 +42,6 @@ submission/walkthrough.mp4
 
 # fastembed local model cache
 local_cache/
+
+# python venv (snippet validator)
+.venv/

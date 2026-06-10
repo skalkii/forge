@@ -6,7 +6,8 @@
   "type": "module",
   "license": "MIT",
   "exports": {
-    "./strategy": "./src/mastra/strategy/index.ts"
+    "./strategy": "./src/mastra/strategy/index.ts",
+    "./snippets": "./src/snippets/registry.ts"
   },
   "engines": {
     "node": ">=20"
@@ -18,7 +19,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "test": "echo \"(no tests yet)\" && exit 0"
+    "test": "echo \"(no tests yet)\" && exit 0",
+    "validate:snippets": "tsx scripts/validate-snippets.ts"
   },
   "dependencies": {
     "@mastra/core": "^1.41.0",
@@ -39,6 +41,7 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "mastra": "^1.12.2",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }

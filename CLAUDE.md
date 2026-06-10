@@ -104,7 +104,7 @@ forge/
 │   │   ├── templates/
 │   │   ├── registry.ts                 # capability → template + Zod params
 │   │   └── render.ts
-│   ├── scripts/validate-snippets.py    # offline template QA
+│   ├── scripts/validate-snippets.ts    # offline template QA (spawns python from agent/.venv)
 │   └── db/{schema.ts,migrations/}      # signals · candidates · experiments · touches · outcomes · audit_log
 ├── dashboard/                          # Next.js 15 — review queue + live ops
 ├── .env.example
@@ -186,7 +186,7 @@ Metrics we report: **cost per activated developer** (headline), **qualified-touc
   Mastra persists the workflow snapshot to its storage adapter (Postgres in our case), so a draft can sit in the queue for hours/days. The dashboard resumes via the Mastra HTTP API using `runId` (stored on the candidate row) + the step id.
 - **Branch syntax** — `branch()` takes pairs of `[predicate, step]`; the first true predicate wins; provide an explicit fallback step to cover the `else` case rather than relying on falsthrough.
 - **Per-candidate runs (R1)** — discovery enqueues qualified candidates; dispatcher starts one `touch-workflow` per candidate. One suspend per run ⇒ approvals never block other candidates.
-- **Snippets are select-and-fill (R2)** — craft agent returns `{templateId ∈ registry, params}` validated by the registry's Zod schema. It never writes code freeform. Offline validator (`scripts/validate-snippets.py`) runs each template against live VideoDB API; failures block deploy.
+- **Snippets are select-and-fill (R2)** — craft agent returns `{templateId ∈ registry, params}` validated by the registry's Zod schema. It never writes code freeform. Offline validator (`scripts/validate-snippets.ts`, runs rendered snippets via python from `agent/.venv`) executes each template against the live VideoDB API; failures block deploy.
 - **Disclosure mandatory (R3)** — craft agent instructions inject `DISCLOSURE_TEXT`; spam-guardrail does a deterministic substring/regex check; gate UI highlights the disclosure line.
 - **GitHub rate budgets (R4)** — `lib/github-client.ts` keeps **two budgets** (search ~30/min vs core ~15k/hr), read live from response headers. Discovery is a low-frequency poller (`DISCOVERY_INTERVAL_MIN`); writes serialized ≥1s apart; `Retry-After` honored.
 - **Experiments (R5)** — `touches.experiment_id` + `touches.variant`; UTM variant rides on `utm_content` (keep `utm_campaign` = touch id). Attribution join groups outcomes by experiment/variant.
@@ -229,6 +229,7 @@ pnpm --filter agent build        # mastra build
 pnpm --filter agent db:migrate   # apply db/migrations
 pnpm test                        # unit tests (scorers, attribution join, strategy)
 pnpm --filter agent loop         # trigger the discovery-workflow once (manual run)
+pnpm --filter agent validate:snippets   # run every template against the live VideoDB API
 ```
 
 ---

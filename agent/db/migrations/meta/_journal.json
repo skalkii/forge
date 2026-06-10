@@ -50,6 +50,20 @@
       "when": 1781070421370,
       "tag": "0006_retrieval_cache_notify",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781071280743,
+      "tag": "0007_snippet_validations",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781071281401,
+      "tag": "0008_snippet_validations_notify",
+      "breakpoints": true
     }
   ]
 }
