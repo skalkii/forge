@@ -2,6 +2,7 @@ import Link from "next/link";
 import { z } from "zod";
 
 import { RefreshOnChange } from "@/components/refresh-on-change";
+import { RelTime } from "@/components/rel-time";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -90,8 +91,8 @@ function BudgetGauge({ b }: { b: z.infer<typeof BudgetRow> }) {
           </span>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          Last header read {b.at.toISOString().replace("T", " ").slice(0, 19)} UTC — budgets come
-          from live <code>x-ratelimit-*</code> headers, never hardcoded (R4).
+          Last read <RelTime iso={b.at.toISOString()} /> — budgets come from live{" "}
+          <code>x-ratelimit-*</code> headers, never hardcoded (R4).
         </p>
       </div>
     </section>
@@ -111,9 +112,10 @@ export default async function GithubSettingsPage() {
             ← Models
           </Link>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Dual rate budgets (R4): search and core are separate pools, tracked from response
-          headers on every request through <code>lib/github-client.ts</code>.
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          How much GitHub API headroom we have right now. GitHub gives two separate allowances —
+          a small one for search (what discovery uses) and a large one for everything else. Both
+          gauges read the live values GitHub returns with every response, never assumptions.
         </p>
       </div>
 
@@ -155,7 +157,7 @@ export default async function GithubSettingsPage() {
               {requests.map((r) => (
                 <tr key={r.id} className="border-b last:border-b-0">
                   <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
-                    {r.at.toISOString().slice(11, 19)}
+                    <RelTime iso={r.at.toISOString()} />
                   </td>
                   <td className="px-4 py-2">
                     <span

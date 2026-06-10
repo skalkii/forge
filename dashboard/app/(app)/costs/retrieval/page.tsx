@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { JsonModal } from "@/components/json-modal";
 import { RefreshOnChange } from "@/components/refresh-on-change";
+import { RelTime } from "@/components/rel-time";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -93,9 +94,10 @@ export default async function RetrievalPage() {
             ← Costs
           </Link>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Exa + Parallel enrichment through <code>lib/retrieval.ts</code> — cached, metered, and
-          capped by a daily budget that fails closed. Money is only spent after triage passes.
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          Paid web research (Exa + Parallel) used to fact-check a thread before we reply. Every
+          request is cached so repeat questions cost nothing, and a hard daily budget stops all
+          research once hit — the system fails closed, never overspends.
         </p>
       </div>
 
@@ -172,7 +174,7 @@ export default async function RetrievalPage() {
                     {usd(e.cost_usd)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-muted-foreground">
-                    {e.last_used_at.toISOString().slice(5, 16).replace("T", " ")}
+                    <RelTime iso={e.last_used_at.toISOString()} />
                   </td>
                   <td className="px-4 py-2 text-right">
                     <JsonModal title={`retrieval_cache/${e.id.slice(0, 8)}`} data={e} />

@@ -30,8 +30,10 @@ export default function SettingsPage() {
             GitHub →
           </Link>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Model routing and provider configuration, read from the root <code>.env</code>.
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          Which AI models the agent runs on, and whether their credentials are in place. Two
+          tiers: a cheap model handles high-volume triage; a strong model makes the judgment
+          calls (qualify + craft). Both are swappable via <code>.env</code> — no code changes.
         </p>
       </div>
 

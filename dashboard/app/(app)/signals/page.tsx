@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import { JsonModal } from "@/components/json-modal";
+import { PageIntro } from "@/components/page-intro";
 import { RefreshOnChange } from "@/components/refresh-on-change";
+import { RelTime } from "@/components/rel-time";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -80,13 +82,11 @@ export default async function SignalsPage({
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["signals"]} />
-      <div>
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Signals</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Raw discovery results — one row per GitHub thread, R7-minimal (username, URL, repo,
-          excerpt). New rows appear live on NOTIFY.
-        </p>
-      </div>
+      <PageIntro title="Signals">
+        Everything discovery found on GitHub, before any judgment is applied — one row per thread.
+        We keep only the minimum needed to act: username, link, repo, and the matched excerpt.
+        Near-duplicates are folded under the first sighting. New finds appear here live.
+      </PageIntro>
 
       <form className="flex flex-wrap items-end gap-3" method="get">
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -151,9 +151,7 @@ export default async function SignalsPage({
                     <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                       <span className="font-mono">{s.repo}</span>
                       <span>by {s.author}</span>
-                      <span className="tabular-nums">
-                        {s.found_at.toISOString().replace("T", " ").slice(0, 16)} UTC
-                      </span>
+                      <RelTime iso={s.found_at.toISOString()} className="tabular-nums" />
                       <span
                         className="max-w-56 truncate rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400"
                         title={s.query}

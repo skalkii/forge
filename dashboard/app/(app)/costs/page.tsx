@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { JsonModal } from "@/components/json-modal";
 import { RefreshOnChange } from "@/components/refresh-on-change";
+import { RelTime } from "@/components/rel-time";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -85,12 +86,12 @@ async function loadEvents() {
 }
 
 const PROVIDER_COLORS = [
-  "bg-blue-500",
-  "bg-violet-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-cyan-500",
-  "bg-rose-500",
+  "bg-orange-500",
+  "bg-amber-400",
+  "bg-rose-400",
+  "bg-teal-500",
+  "bg-violet-400",
+  "bg-lime-600",
 ];
 
 function usd(n: number): string {
@@ -165,10 +166,10 @@ export default async function CostsPage() {
   ]);
 
   const cards = [
-    { label: "Last 24h", value: usd(summary.last24h) },
-    { label: "Last 7 days", value: usd(summary.last7d) },
-    { label: "All time", value: usd(summary.total) },
-    { label: "Paid calls", value: String(summary.events) },
+    { label: "Last 24h", value: usd(summary.last24h), hint: "Rolling 24-hour spend across all providers" },
+    { label: "Last 7 days", value: usd(summary.last7d), hint: "Rolling weekly spend — watch the trend, not the day" },
+    { label: "All time", value: usd(summary.total), hint: "Everything this agent has ever spent" },
+    { label: "Paid calls", value: String(summary.events), hint: "Count of individual metered API calls" },
   ];
 
   return (
@@ -184,10 +185,11 @@ export default async function CostsPage() {
             Retrieval →
           </Link>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Every paid call flows through <code>lib/cost-meter.ts</code> into{" "}
-          <code>cost_events</code> and the <code>spend-and-efficiency.csv</code> deliverable. The
-          headline metric is cost per activated developer.
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          Every paid call the system makes — model inference, embeddings, web research — is
+          metered here the moment it happens. This feeds the headline metric: how much it costs
+          to activate one developer. By design, money is only spent on a thread after cheap
+          triage says it&apos;s worth it.
         </p>
       </div>
 
@@ -196,6 +198,7 @@ export default async function CostsPage() {
           <section key={c.label} className="rounded-lg border bg-card px-4 py-3">
             <p className="text-xs text-muted-foreground">{c.label}</p>
             <p className="mt-1 text-lg font-semibold tabular-nums">{c.value}</p>
+            <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">{c.hint}</p>
           </section>
         ))}
       </div>
@@ -264,9 +267,10 @@ export default async function CostsPage() {
                   className="flex items-center justify-between gap-3 border-b px-4 py-2 last:border-b-0"
                 >
                   <div className="flex min-w-0 items-center gap-2 text-xs">
-                    <span className="whitespace-nowrap tabular-nums text-muted-foreground">
-                      {e.at.toISOString().slice(5, 16).replace("T", " ")}
-                    </span>
+                    <RelTime
+                      iso={e.at.toISOString()}
+                      className="whitespace-nowrap tabular-nums text-muted-foreground"
+                    />
                     <span className="rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-[11px] text-blue-600 dark:text-blue-400">
                       {e.provider}
                     </span>

@@ -3,47 +3,41 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const items: { href: string; label: string; built: boolean }[] = [
-  { href: "/", label: "Overview", built: true },
-  { href: "/signals", label: "Signals", built: true },
-  { href: "/candidates", label: "Candidates", built: false },
-  { href: "/drafts", label: "Drafts", built: false },
-  { href: "/runs", label: "Runs", built: false },
-  { href: "/snippets", label: "Snippets", built: true },
-  { href: "/strategy", label: "Strategy", built: true },
-  { href: "/experiments", label: "Experiments", built: false },
-  { href: "/costs", label: "Costs", built: true },
-  { href: "/errors", label: "Errors", built: false },
-  { href: "/settings", label: "Settings", built: true },
-];
+import { navItems } from "@/components/nav-items";
 
 export function Nav() {
   const pathname = usePathname();
   return (
     <nav className="flex flex-col gap-0.5 px-2">
-      {items.map((item) =>
-        item.built ? (
+      {navItems.map((item) => {
+        const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+        const Icon = item.icon;
+        return item.built ? (
           <Link
             key={item.href}
             href={item.href}
-            className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-              pathname === item.href
-                ? "bg-accent font-medium text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            title={item.blurb}
+            className={`flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+              active
+                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
             }`}
           >
+            <Icon className={`size-4 shrink-0 ${active ? "text-primary" : ""}`} />
             {item.label}
           </Link>
         ) : (
           <span
             key={item.href}
-            className="flex items-baseline justify-between rounded-md px-3 py-1.5 text-sm text-muted-foreground/50"
+            title={`${item.blurb} (coming soon)`}
+            className="flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground/50"
           >
+            <Icon className="size-4 shrink-0" />
             {item.label}
-            <span className="text-[10px] uppercase tracking-wide">soon</span>
+            <span className="ml-auto text-[10px] uppercase tracking-wide">soon</span>
           </span>
-        ),
-      )}
+        );
+      })}
     </nav>
   );
 }

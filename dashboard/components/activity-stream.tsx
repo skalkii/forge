@@ -9,6 +9,26 @@ const opStyles: Record<ForgeEvent["op"], string> = {
   DELETE: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
 };
 
+const EVENT_LABEL: Record<string, Partial<Record<ForgeEvent["op"], string>>> = {
+  signals: { INSERT: "New thread discovered", UPDATE: "Signal updated", DELETE: "Signal purged" },
+  candidates: {
+    INSERT: "Thread passed triage",
+    UPDATE: "Candidate moved forward",
+    DELETE: "Candidate removed",
+  },
+  touches: { INSERT: "Draft ready for review", UPDATE: "Review decision recorded" },
+  cost_events: { INSERT: "Paid call metered" },
+  github_requests: { INSERT: "GitHub API call" },
+  snippet_validations: { INSERT: "Template validated" },
+  retrieval_cache: { INSERT: "Research cached", UPDATE: "Cache hit" },
+  audit_log: { INSERT: "Audit entry" },
+  errors: { INSERT: "Error caught" },
+};
+
+function describe(e: ForgeEvent): string {
+  return EVENT_LABEL[e.table]?.[e.op] ?? `${e.table} ${e.op.toLowerCase()}`;
+}
+
 type StreamItem = ForgeEvent & { key: number };
 
 let seq = 0;
@@ -56,7 +76,10 @@ export function ActivityStream({
               >
                 {e.op}
               </span>
-              <span className="font-medium">{e.table}</span>
+              <span className="font-medium">{describe(e)}</span>
+              <span className="hidden font-mono text-[11px] text-muted-foreground/70 sm:inline">
+                {e.table}
+              </span>
               {e.id ? (
                 <span className="truncate font-mono text-xs text-muted-foreground" title={e.id}>
                   {e.id.length > 12 ? `${e.id.slice(0, 12)}…` : e.id}

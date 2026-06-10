@@ -2,6 +2,7 @@ import Link from "next/link";
 import { z } from "zod";
 
 import { RefreshOnChange } from "@/components/refresh-on-change";
+import { RelTime } from "@/components/rel-time";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -60,8 +61,10 @@ export default async function DbSettingsPage() {
             ← Models
           </Link>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Live <code>information_schema</code> + audit trail. Counts refresh on NOTIFY.
+        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          A live look inside the database: every table, its row count, and whether it pushes
+          changes to this dashboard in real time. Below, the audit trail — every decision,
+          kill-switch flip, and deletion the system records, newest first.
         </p>
       </div>
 
@@ -123,7 +126,7 @@ export default async function DbSettingsPage() {
               {audit.map((row) => (
                 <tr key={row.id} className="border-b align-top last:border-b-0">
                   <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
-                    {row.at.toISOString().replace("T", " ").slice(0, 19)}
+                    <RelTime iso={row.at.toISOString()} />
                   </td>
                   <td className="px-4 py-2">{row.actor}</td>
                   <td className="px-4 py-2 font-mono text-xs">{row.action}</td>

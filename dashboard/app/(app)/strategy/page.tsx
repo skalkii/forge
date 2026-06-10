@@ -1,5 +1,7 @@
 import { getActiveStrategy, listStrategies } from "@forge/agent/strategy";
 
+import { PageIntro } from "@/components/page-intro";
+
 export const dynamic = "force-dynamic";
 
 export default function StrategyPage() {
@@ -12,14 +14,13 @@ export default function StrategyPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Strategy</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          The only metric-specific code in the engine. Active:{" "}
-          <code className="text-foreground">{strategy.id}</code>
-          {registered.length > 1 ? ` · ${registered.length} registered` : null}
-        </p>
-      </div>
+      <PageIntro title="Strategy">
+        What the agent is hunting for and how success is measured. The engine itself is
+        metric-agnostic — everything specific to this goal (the GitHub searches, the judging
+        rubric, the attribution rules) lives in one swappable strategy. Active:{" "}
+        <code className="text-foreground">{strategy.id}</code>
+        {registered.length > 1 ? ` · ${registered.length} registered` : null}
+      </PageIntro>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg border bg-card">

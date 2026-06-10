@@ -2,7 +2,9 @@ import { snippetRegistry } from "@forge/agent/snippets";
 import { z } from "zod";
 
 import { JsonModal } from "@/components/json-modal";
+import { PageIntro } from "@/components/page-intro";
 import { RefreshOnChange } from "@/components/refresh-on-change";
+import { RelTime } from "@/components/rel-time";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +54,7 @@ function StatusPill({ row }: { row: z.infer<typeof ValidationRow> | undefined })
           : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
       }`}
     >
-      {row.status} · {row.ran_at.toISOString().slice(5, 16).replace("T", " ")}
+      {row.status} <RelTime iso={row.ran_at.toISOString()} />
     </span>
   );
 }
@@ -65,14 +67,12 @@ export default async function SnippetsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["snippet_validations"]} />
-      <div>
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Snippets</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Select-and-fill template library (R2) — the craft agent picks an id + params, never
-          writes code. Validate against the live VideoDB API with{" "}
-          <code>pnpm --filter agent validate:snippets</code>; failures block deploy.
-        </p>
-      </div>
+      <PageIntro title="Snippets">
+        The code-template library every reply draws from. The AI never writes code freeform — it
+        picks one of these hand-maintained templates and fills in the blanks, so anything posted
+        publicly has already been validated against the real VideoDB API. A failed validation
+        blocks deploy.
+      </PageIntro>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {templates.map((t) => (
@@ -128,9 +128,10 @@ export default async function SnippetsPage() {
                 className="flex items-center justify-between gap-3 border-b px-4 py-2 last:border-b-0"
               >
                 <div className="flex min-w-0 items-center gap-2 text-xs">
-                  <span className="whitespace-nowrap tabular-nums text-muted-foreground">
-                    {r.ran_at.toISOString().slice(5, 16).replace("T", " ")}
-                  </span>
+                  <RelTime
+                    iso={r.ran_at.toISOString()}
+                    className="whitespace-nowrap tabular-nums text-muted-foreground"
+                  />
                   <code>{r.template_id}</code>
                   <span
                     className={

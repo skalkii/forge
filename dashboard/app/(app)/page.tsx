@@ -1,36 +1,44 @@
+import { CircleDollarSign, Percent, ShieldAlert, Wallet } from "lucide-react";
+
 import { ActivityStream } from "@/components/activity-stream";
+import { PageIntro } from "@/components/page-intro";
+import { StatCard } from "@/components/stat-card";
 
 const kpis = [
   {
     label: "Cost / activated dev",
-    hint: "LLM + retrieval spend ÷ devs reaching first_successful_api_call",
+    icon: CircleDollarSign,
+    hint: "Total LLM + research spend divided by developers who made their first successful VideoDB API call. The one number this whole system optimizes.",
   },
-  { label: "Qualified → activation", hint: "Share of qualified touches that convert" },
-  { label: "Negative signal rate", hint: "Deleted / flagged / downvoted touches" },
-  { label: "Spend today", hint: "All providers, resets at midnight UTC" },
+  {
+    label: "Qualified → activation",
+    icon: Percent,
+    hint: "Of the threads we judged a genuine fit and replied to, how many led to an activated developer.",
+  },
+  {
+    label: "Negative signal rate",
+    icon: ShieldAlert,
+    hint: "Replies that got deleted, flagged, or downvoted. The guardrail metric — must stay at zero.",
+  },
+  {
+    label: "Spend today",
+    icon: Wallet,
+    hint: "Every paid model and research call across providers. Resets at midnight UTC.",
+  },
 ];
 
 export default function OverviewPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Overview</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          North-star: cheapest path from a stuck developer to an activated one.
-        </p>
-      </div>
+      <PageIntro title="Overview">
+        The north-star view: the cheapest path from a developer stuck on a video problem to one
+        actively using VideoDB. KPIs fill in as touches go live; the stream below shows everything
+        the system does, as it happens.
+      </PageIntro>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-lg border bg-card px-4 py-3">
-            <div className="text-xs text-muted-foreground">{kpi.label}</div>
-            <div className="mt-1 text-2xl font-semibold tabular-nums text-muted-foreground/60">
-              —
-            </div>
-            <div className="mt-1 truncate text-[11px] text-muted-foreground/70" title={kpi.hint}>
-              {kpi.hint}
-            </div>
-          </div>
+          <StatCard key={kpi.label} label={kpi.label} icon={kpi.icon} value="—" hint={kpi.hint} muted />
         ))}
       </div>
 
@@ -42,7 +50,8 @@ export default function OverviewPage() {
             <span className="text-xs text-muted-foreground">last 24h</span>
           </header>
           <div className="px-4 py-8 text-sm text-muted-foreground">
-            No errors recorded. The error log wires up with the errors table.
+            No errors recorded — caught failures from agents and workflows will land here with
+            context and a retry link.
           </div>
         </section>
       </div>
