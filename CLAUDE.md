@@ -56,7 +56,7 @@ A dispatcher (cron) launches one `touch-workflow` per new qualified candidate. C
 
 - **Language / runtime:** TypeScript, Node 20+.
 - **Framework:** Mastra — `@mastra/core` (agents, workflows, tools), `@mastra/memory`, `@mastra/pg`.
-- **Models:** Vercel AI SDK behind one swappable interface in `lib/models.ts` — provider-agnostic registry. `CHEAP_MODEL` / `STRONG_MODEL` env vars use `provider:model` form (e.g. `anthropic:claude-haiku-4-5`, `ollama:qwen2.5-coder:7b`, `deepseek:deepseek-chat`, `openai:gpt-5-mini`).
+- **Models:** Mastra model router behind one swappable interface in `lib/models.ts` — provider-agnostic registry. `CHEAP_MODEL` / `STRONG_MODEL` env vars use the router's `provider/model` form (e.g. `anthropic/claude-haiku-4-5`, `ollama/qwen2.5-coder:7b`, `deepseek/deepseek-chat`, `openai/gpt-5-mini`); legacy `provider:model` is accepted and normalized (split on first colon — Ollama model ids contain colons). Hosted providers resolve via Mastra's built-in registry with API keys auto-detected from env; `ollama/*` resolves to an OpenAI-compatible config at `OLLAMA_BASE_URL/v1`.
 - **GitHub:** Octokit via a **GitHub App** (read + higher rate limits); posting via a real human account (`GITHUB_POST_AS`).
 - **Research:** Exa (`exa-js`) + Parallel (SDK/REST), wrapped by `lib/retrieval.ts` (cache + budget + cost-meter).
 - **Data:** Postgres + pgvector (local Docker for dev; managed for prod) — backs Mastra memory, workflow snapshots, vectors, and domain tables.
@@ -236,14 +236,15 @@ pnpm --filter agent loop         # trigger the discovery-workflow once (manual r
 ## Environment variables
 
 ```bash
-# AI models (provider-agnostic; provider:model form)
-CHEAP_MODEL=             # e.g. anthropic:claude-haiku-4-5, ollama:qwen2.5-coder:7b
-STRONG_MODEL=            # e.g. anthropic:claude-sonnet-4-6, deepseek:deepseek-chat
+# AI models (provider-agnostic; provider/model form)
+CHEAP_MODEL=             # e.g. anthropic/claude-haiku-4-5, ollama/qwen2.5-coder:7b
+STRONG_MODEL=            # e.g. anthropic/claude-sonnet-4-6, deepseek/deepseek-chat
 # Provider credentials (set those you use)
 ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
 DEEPSEEK_API_KEY=
 MISTRAL_API_KEY=
+DASHSCOPE_API_KEY=       # qwen/* hosted models
 OLLAMA_BASE_URL=         # default http://localhost:11434
 
 # GitHub (App for read + higher limits)
