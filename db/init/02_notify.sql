@@ -6,10 +6,11 @@ CREATE OR REPLACE FUNCTION forge_notify() RETURNS trigger AS $$
 DECLARE
   row_id text;
 BEGIN
+  -- to_jsonb so tables with a non-"id" PK (settings) don't error
   IF TG_OP = 'DELETE' THEN
-    row_id = OLD.id::text;
+    row_id = COALESCE(to_jsonb(OLD)->>'id', to_jsonb(OLD)->>'key');
   ELSE
-    row_id = NEW.id::text;
+    row_id = COALESCE(to_jsonb(NEW)->>'id', to_jsonb(NEW)->>'key');
   END IF;
   PERFORM pg_notify(
     'forge_events',
