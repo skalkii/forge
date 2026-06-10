@@ -8,12 +8,14 @@ export function StatCard({
   hint,
   icon: Icon,
   muted = false,
+  spark,
 }: {
   label: string;
   value: ReactNode;
   hint: string;
   icon?: LucideIcon;
   muted?: boolean;
+  spark?: ReactNode;
 }) {
   return (
     <div className="rounded-lg border bg-card px-4 py-3">
@@ -26,6 +28,7 @@ export function StatCard({
       >
         {value}
       </div>
+      {spark && <div className="mt-1.5">{spark}</div>}
       <div className="mt-1 text-[11px] leading-snug text-muted-foreground/80">{hint}</div>
     </div>
   );
