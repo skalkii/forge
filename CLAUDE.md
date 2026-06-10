@@ -161,14 +161,30 @@ Metrics we report: **cost per activated developer** (headline), **qualified-touc
 
 ## Key implementation notes
 
-- **Human gate pattern** — the gate is a deterministic step that suspends and resumes:
+- **Mastra API anchors (verified against `@mastra/core` 1.41 at commit 6).**
+  - `createStep({ id, inputSchema, outputSchema, resumeSchema, suspendSchema, execute })` — all schemas are Zod. `execute` receives `{ inputData, resumeData, suspend, suspendData, bail }`.
+  - `createWorkflow({ id, inputSchema, outputSchema }).then(step).parallel([a, b]).branch([[predicate, step], ...]).map(async ({ inputData }) => ({...})).commit()`. `.commit()` is required to register the workflow.
+  - `createStep(agent)` adapts an `Agent` into a workflow step (input goes to the agent prompt, structured output becomes the step output). Use this to embed `triage` / `qualify` / `craft` inline in `touch-workflow`.
+  - `createTool({ id, inputSchema, outputSchema, execute })` — Zod-typed. Agent tools are attached on the `Agent` constructor; deterministic-only tools (the `operate/*` family) are simply *not* added to any agent.
+  - `createScorer({ id, description, judge?, type }).preprocess(...).analyze(...).generateScore(...).generateReason(...)` — chain pattern. Scorers can be attached to agents (sampled) or invoked from workflow steps directly.
+- **Human gate pattern** — the gate is a deterministic step that suspends on first execution and resumes on the second; **always `return await suspend(...)`** (the prior sketch's bare `await suspend(...)` followed by an inline `return {...}` is wrong — the suspend resolves to the resumeData on resume).
   ```ts
-  execute: async ({ inputData, resumeData, suspend }) => {
-    if (!resumeData) { await suspend({ preview: inputData }); return { decision: "pending", finalReply: inputData.reply }; }
-    return { decision: resumeData.decision, finalReply: resumeData.edited ?? inputData.reply };
+  execute: async ({ inputData, resumeData, suspend, bail }) => {
+    if (resumeData?.decision === 'rejected') {
+      return bail({ reason: resumeData.reason ?? 'reviewer rejected' });
+    }
+    if (resumeData?.decision === 'approved') {
+      return { finalReply: resumeData.edited ?? inputData.draft, decidedBy: resumeData.decidedBy };
+    }
+    return await suspend({
+      preview: inputData.draft,
+      disclosure: inputData.disclosure,
+      scorerResults: inputData.scorerResults,
+    });
   }
   ```
-  Mastra persists the workflow snapshot to Postgres, so a draft can sit in the queue for hours/days.
+  Mastra persists the workflow snapshot to its storage adapter (Postgres in our case), so a draft can sit in the queue for hours/days. The dashboard resumes via the Mastra HTTP API using `runId` (stored on the candidate row) + the step id.
+- **Branch syntax** — `branch()` takes pairs of `[predicate, step]`; the first true predicate wins; provide an explicit fallback step to cover the `else` case rather than relying on falsthrough.
 - **Per-candidate runs (R1)** — discovery enqueues qualified candidates; dispatcher starts one `touch-workflow` per candidate. One suspend per run ⇒ approvals never block other candidates.
 - **Snippets are select-and-fill (R2)** — craft agent returns `{templateId ∈ registry, params}` validated by the registry's Zod schema. It never writes code freeform. Offline validator (`scripts/validate-snippets.py`) runs each template against live VideoDB API; failures block deploy.
 - **Disclosure mandatory (R3)** — craft agent instructions inject `DISCLOSURE_TEXT`; spam-guardrail does a deterministic substring/regex check; gate UI highlights the disclosure line.
