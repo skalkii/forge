@@ -26,6 +26,7 @@
     "purge": "tsx scripts/run-purge.ts",
     "forget-user": "tsx scripts/forget-user.ts",
     "preflight": "tsx scripts/preflight.ts",
+    "cron": "tsx scripts/run-cron.ts",
     "seed:experiments": "tsx scripts/seed-experiments.ts",
     "validate:snippets": "tsx scripts/validate-snippets.ts"
   },
