@@ -2,3 +2,5 @@ packages:
   - "agent"
   - "dashboard"
   - "packages/*"
+allowBuilds:
+  esbuild: true
