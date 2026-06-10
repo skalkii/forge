@@ -76,6 +76,9 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.3.5
+      '@next/env':
+        specifier: ^16.2.7
+        version: 16.2.7
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.0
@@ -890,6 +893,9 @@ packages:
 
   '@next/env@15.5.19':
     resolution: {integrity: sha512-sWWluFvcv5v3Fxznmf2ZfjyoVQt/64oCnYqS90inQWGzMPK1VjvekPiz3OPHKmFT30EnHrjlbyaHLt3M0vWabw==}
+
+  '@next/env@16.2.7':
+    resolution: {integrity: sha512-tMJizPlj6ZYpBMMdK8S0LJufrP4QTdR6pcv9KQ/bVETPAmg0j1mlHE9G2c38UyGHxoBapgwuj7XjbGJ2RcDFOg==}
 
   '@next/eslint-plugin-next@15.5.19':
     resolution: {integrity: sha512-Ctwb4qYuMbHN/1oXLlTdMchwG8h8Xzwq+wGZZMgF3o6+uwyBKAI2c96bdOsl+C62PaUD0Jkh+QpNkhUeDlam0Q==}
@@ -5266,6 +5272,8 @@ snapshots:
   '@neon-rs/load@0.0.4': {}
 
   '@next/env@15.5.19': {}
+
+  '@next/env@16.2.7': {}
 
   '@next/eslint-plugin-next@15.5.19':
     dependencies:

@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
+import { loadEnvConfig } from "@next/env";
+import path from "node:path";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+// Single .env at the repo root is shared by agent + dashboard.
+loadEnvConfig(path.join(__dirname, ".."), process.env.NODE_ENV !== "production");
+
+const nextConfig: NextConfig = {};
 
 export default nextConfig;
