@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PingButton } from "@/components/ping-button";
 import { providerCredentials, summarizeModel } from "@/lib/server/models";
 
@@ -16,7 +18,12 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Settings</h1>
+        <div className="flex items-baseline gap-3">
+          <h1 className="font-heading text-xl font-semibold tracking-tight">Settings</h1>
+          <Link href="/settings/db" className="text-xs text-muted-foreground hover:text-foreground">
+            Database →
+          </Link>
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           Model routing and provider configuration, read from the root <code>.env</code>.
         </p>

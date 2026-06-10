@@ -1,0 +1,144 @@
+import Link from "next/link";
+import { z } from "zod";
+
+import { RefreshOnChange } from "@/components/refresh-on-change";
+import { query } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+const TableRow = z.object({
+  table_name: z.string(),
+  column_count: z.coerce.number(),
+  row_count: z.coerce.number(),
+  has_notify: z.boolean(),
+});
+
+const AuditRow = z.object({
+  id: z.string(),
+  actor: z.string(),
+  action: z.string(),
+  subject_table: z.string().nullable(),
+  subject_id: z.string().nullable(),
+  detail: z.unknown().nullable(),
+  at: z.coerce.date(),
+});
+
+async function loadTables() {
+  return query(
+    TableRow,
+    `SELECT c.relname AS table_name,
+            (SELECT count(*) FROM information_schema.columns col
+              WHERE col.table_schema = 'public' AND col.table_name = c.relname) AS column_count,
+            (SELECT count(*) FROM pg_trigger tg
+              WHERE tg.tgrelid = c.oid AND tg.tgname LIKE '%_notify') > 0 AS has_notify,
+            COALESCE((SELECT n_live_tup FROM pg_stat_user_tables s WHERE s.relid = c.oid), 0) AS row_count
+       FROM pg_class c
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public' AND c.relkind = 'r'
+      ORDER BY c.relname`,
+  );
+}
+
+async function loadAuditTail() {
+  return query(
+    AuditRow,
+    `SELECT id, actor, action, subject_table, subject_id, detail, at
+       FROM audit_log ORDER BY at DESC LIMIT 25`,
+  );
+}
+
+export default async function DbSettingsPage() {
+  const [tables, audit] = await Promise.all([loadTables(), loadAuditTail()]);
+
+  return (
+    <div className="space-y-6">
+      <RefreshOnChange />
+      <div>
+        <div className="flex items-baseline gap-3">
+          <h1 className="font-heading text-xl font-semibold tracking-tight">Database</h1>
+          <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
+            ← Models
+          </Link>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Live <code>information_schema</code> + audit trail. Counts refresh on NOTIFY.
+        </p>
+      </div>
+
+      <section className="rounded-lg border bg-card">
+        <header className="flex items-center justify-between border-b px-4 py-2.5">
+          <h2 className="text-sm font-medium">Tables</h2>
+          <span className="text-xs text-muted-foreground">public schema</span>
+        </header>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-xs text-muted-foreground">
+              <th className="px-4 py-2 font-medium">Table</th>
+              <th className="px-4 py-2 text-right font-medium">Columns</th>
+              <th className="px-4 py-2 text-right font-medium">Rows</th>
+              <th className="px-4 py-2 text-right font-medium">NOTIFY</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tables.map((t) => (
+              <tr key={t.table_name} className="border-b last:border-b-0">
+                <td className="px-4 py-2 font-mono text-xs">{t.table_name}</td>
+                <td className="px-4 py-2 text-right tabular-nums">{t.column_count}</td>
+                <td className="px-4 py-2 text-right tabular-nums">{t.row_count}</td>
+                <td className="px-4 py-2 text-right">
+                  <span
+                    className={`inline-block size-1.5 rounded-full ${
+                      t.has_notify ? "bg-emerald-500" : "bg-muted-foreground/40"
+                    }`}
+                    title={t.has_notify ? "forge_notify trigger attached" : "no trigger"}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="rounded-lg border bg-card">
+        <header className="flex items-center justify-between border-b px-4 py-2.5">
+          <h2 className="text-sm font-medium">Audit log</h2>
+          <span className="text-xs text-muted-foreground">last 25 entries</span>
+        </header>
+        {audit.length === 0 ? (
+          <div className="px-4 py-8 text-sm text-muted-foreground">
+            No audit entries yet. Decisions, kill-switch flips, and deletions land here.
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs text-muted-foreground">
+                <th className="px-4 py-2 font-medium">At</th>
+                <th className="px-4 py-2 font-medium">Actor</th>
+                <th className="px-4 py-2 font-medium">Action</th>
+                <th className="px-4 py-2 font-medium">Subject</th>
+                <th className="px-4 py-2 font-medium">Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {audit.map((row) => (
+                <tr key={row.id} className="border-b align-top last:border-b-0">
+                  <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
+                    {row.at.toISOString().replace("T", " ").slice(0, 19)}
+                  </td>
+                  <td className="px-4 py-2">{row.actor}</td>
+                  <td className="px-4 py-2 font-mono text-xs">{row.action}</td>
+                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
+                    {row.subject_table ? `${row.subject_table}/${row.subject_id ?? "—"}` : "—"}
+                  </td>
+                  <td className="max-w-64 truncate px-4 py-2 font-mono text-[11px] text-muted-foreground">
+                    {row.detail ? JSON.stringify(row.detail) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    </div>
+  );
+}
