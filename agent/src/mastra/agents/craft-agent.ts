@@ -4,6 +4,9 @@ import { z } from "zod";
 import { snippetRegistry, snippetTemplateIds } from "../../snippets/registry";
 import { disclosureText } from "../lib/disclosure";
 import { getStrongModel } from "../lib/models";
+import { SNIPPET_MARKER } from "../lib/reply";
+
+export { SNIPPET_MARKER };
 
 /**
  * Craft — drafts the public reply for an approved-capability candidate.
@@ -25,7 +28,6 @@ import { getStrongModel } from "../lib/models";
  * `object === undefined`.
  */
 
-export const SNIPPET_MARKER = "[[SNIPPET]]";
 
 export const craftOutputSchema = z.object({
   templateId: z

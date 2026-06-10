@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "test": "echo \"(no tests yet)\" && exit 0",
+    "test": "vitest run",
     "validate:snippets": "tsx scripts/validate-snippets.ts"
   },
   "dependencies": {
@@ -42,6 +42,7 @@
     "drizzle-kit": "^0.31.10",
     "mastra": "^1.12.2",
     "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   }
 }
