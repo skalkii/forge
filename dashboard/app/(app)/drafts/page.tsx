@@ -3,10 +3,13 @@ import { z } from "zod";
 
 import { DraftBody } from "@/components/draft-body";
 import { JsonModal } from "@/components/json-modal";
+import { ReviewButtons } from "@/components/review-buttons";
 import { PageIntro } from "@/components/page-intro";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
 import { query, queryOne } from "@/lib/db";
+
+import { decideDraft } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -221,10 +224,47 @@ export default async function DraftsPage() {
 
               <DraftBody body={d.draft_body} />
 
-              <p className="text-xs text-muted-foreground">
-                Approve / edit / reject actions arrive in the next commit — this run stays
-                suspended until then.
-              </p>
+              {d.run_id ? (
+                <form action={decideDraft} className="space-y-3 rounded-md border bg-background p-3">
+                  <input type="hidden" name="runId" value={d.run_id} />
+                  <input type="hidden" name="draftBody" value={d.draft_body} />
+                  <details>
+                    <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                      Edit before approving (your edit is what gets posted)
+                    </summary>
+                    <textarea
+                      name="editedBody"
+                      defaultValue={d.draft_body}
+                      rows={10}
+                      className="mt-2 w-full rounded-md border bg-card p-2 font-mono text-xs leading-relaxed"
+                    />
+                  </details>
+                  <div className="flex flex-wrap items-end gap-3">
+                    <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      Your name (logged with the decision)
+                      <input
+                        name="decidedBy"
+                        required
+                        placeholder="reviewer"
+                        className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground"
+                      />
+                    </label>
+                    <label className="flex min-w-48 grow flex-col gap-1 text-xs text-muted-foreground">
+                      Reason (kept on reject)
+                      <input
+                        name="reason"
+                        placeholder="optional — why this draft shouldn't go out"
+                        className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground"
+                      />
+                    </label>
+                    <ReviewButtons />
+                  </div>
+                </form>
+              ) : (
+                <p className="text-xs text-rose-600 dark:text-rose-400">
+                  No run id on this candidate — cannot resume. Inspect the row via the JSON view.
+                </p>
+              )}
             </li>
           ))}
         </ul>
