@@ -14,7 +14,7 @@ const items: { href: string; label: string; built: boolean }[] = [
   { href: "/experiments", label: "Experiments", built: false },
   { href: "/costs", label: "Costs", built: false },
   { href: "/errors", label: "Errors", built: false },
-  { href: "/settings", label: "Settings", built: false },
+  { href: "/settings", label: "Settings", built: true },
 ];
 
 export function Nav() {
