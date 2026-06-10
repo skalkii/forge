@@ -23,6 +23,8 @@
     "loop": "tsx scripts/run-discovery.ts",
     "dispatch": "tsx scripts/run-dispatcher.ts",
     "attribute": "tsx scripts/run-attribution.ts",
+    "purge": "tsx scripts/run-purge.ts",
+    "forget-user": "tsx scripts/forget-user.ts",
     "seed:experiments": "tsx scripts/seed-experiments.ts",
     "validate:snippets": "tsx scripts/validate-snippets.ts"
   },
