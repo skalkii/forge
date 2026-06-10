@@ -48,7 +48,7 @@ export const navItems: NavItem[] = [
     href: "/drafts",
     label: "Drafts",
     icon: FileEdit,
-    built: false,
+    built: true,
     blurb: "Replies waiting for human approval — nothing posts without it.",
   },
   {
