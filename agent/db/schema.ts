@@ -226,6 +226,22 @@ export const snippetValidations = pgTable(
   (t) => [index("snippet_validations_template_idx").on(t.templateId)],
 );
 
+/** Caught failures from workflows / dispatcher / scorers — backs the /errors panel. */
+export const errors = pgTable(
+  "errors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    source: text("source").notNull(), // e.g. dispatcher.run, discovery.search, touch.craft
+    message: text("message").notNull(),
+    stack: text("stack"),
+    candidateId: uuid("candidate_id").references(() => candidates.id, { onDelete: "set null" }),
+    runId: uuid("run_id"),
+    context: jsonb("context").$type<Record<string, unknown>>(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("errors_at_idx").on(t.at), index("errors_source_idx").on(t.source)],
+);
+
 /** Single-row operational flags (R6 kill-switch lives here, not in env). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
@@ -245,6 +261,7 @@ export const allTables = {
   githubRequests,
   retrievalCache,
   snippetValidations,
+  errors,
   settings,
 } as const;
 
@@ -258,3 +275,4 @@ export type AuditEntry = typeof auditLog.$inferSelect;
 export type GithubRequest = typeof githubRequests.$inferSelect;
 export type RetrievalCacheEntry = typeof retrievalCache.$inferSelect;
 export type SnippetValidation = typeof snippetValidations.$inferSelect;
+export type ErrorEntry = typeof errors.$inferSelect;

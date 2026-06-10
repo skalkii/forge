@@ -64,6 +64,20 @@
       "when": 1781071281401,
       "tag": "0008_snippet_validations_notify",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781081891880,
+      "tag": "0009_errors",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781081892529,
+      "tag": "0010_errors_notify",
+      "breakpoints": true
     }
   ]
 }

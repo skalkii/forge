@@ -90,7 +90,7 @@ export const navItems: NavItem[] = [
     href: "/errors",
     label: "Errors",
     icon: AlertTriangle,
-    built: false,
+    built: true,
     blurb: "Caught failures from agents and workflows, with retry links.",
   },
   {

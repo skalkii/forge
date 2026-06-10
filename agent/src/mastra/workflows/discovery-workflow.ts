@@ -4,6 +4,7 @@ import { z } from "zod";
 import { triageAgent, triageOutputSchema, buildTriagePrompt } from "../agents/triage-agent";
 import { getPool } from "../lib/db";
 import { dedupSignals } from "../lib/dedup";
+import { recordError } from "../lib/errors";
 import { generateStructured } from "../lib/generate";
 import { BudgetExhaustedError, RetryAfterError } from "../lib/github-client";
 import { getActiveStrategy } from "../strategy";
@@ -66,6 +67,7 @@ const searchStep = createStep({
         inserted += res.inserted;
       } catch (err) {
         searchErrors.push(`${query}: ${(err as Error).message}`);
+        await recordError("discovery.search", err, { query });
         // search budget is one shared pool (R4) — once it's gone, stop
         if (err instanceof BudgetExhaustedError || err instanceof RetryAfterError) break;
       }
@@ -132,6 +134,7 @@ const triageStep = createStep({
       } catch (err) {
         // signal stays untriaged — next discovery run retries it
         triageErrors.push(`${signal.url}: ${(err as Error).message}`);
+        await recordError("discovery.triage", err, { signalId: signal.id, url: signal.url });
       }
     }
 

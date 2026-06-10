@@ -5,6 +5,7 @@ import { buildCraftPrompt, craftAgent, craftOutputSchema } from "../agents/craft
 import { buildQualifyPrompt, qualifyAgent, qualifyOutputSchema } from "../agents/qualify-agent";
 import { getPool } from "../lib/db";
 import { disclosureText } from "../lib/disclosure";
+import { recordError } from "../lib/errors";
 import { generateStructured } from "../lib/generate";
 import { composeReply } from "../lib/reply";
 import { spamGuardrailScorer } from "../scorers/spam-guardrail";
@@ -213,10 +214,12 @@ const craftStep = createStep({
     }
 
     await setCandidateStatus(candidateId, "failed");
+    const reason = `craft output failed template validation after ${CRAFT_RENDER_ATTEMPTS} attempts: ${lastRenderError}`;
+    await recordError("touch.craft", new Error(reason), { candidateId });
     return {
       ...inputData,
       status: "failed" as const,
-      reason: `craft output failed template validation after ${CRAFT_RENDER_ATTEMPTS} attempts: ${lastRenderError}`,
+      reason,
     };
   },
 });
@@ -239,11 +242,13 @@ const scorersStep = createStep({
 
     if (guardrail.score !== 1) {
       await setCandidateStatus(candidateId, "failed");
+      const reason = `spam-guardrail blocked the draft: ${guardrailResult.reason}`;
+      await recordError("touch.guardrail", new Error(reason), { candidateId });
       return {
         ...inputData,
         status: "blocked" as const,
         guardrail: guardrailResult,
-        reason: `spam-guardrail blocked the draft: ${guardrailResult.reason}`,
+        reason,
       };
     }
 
@@ -264,6 +269,7 @@ const scorersStep = createStep({
       quality = { score: q.score, reason: q.reason ?? "" };
     } catch (err) {
       console.warn(`[touch ${candidateId}] touch-quality judge failed: ${(err as Error).message}`);
+      await recordError("touch.quality-judge", err, { candidateId });
     }
 
     const inserted = await getPool().query<{ id: string }>(
@@ -396,6 +402,7 @@ const actStep = createStep({
       return { ...inputData, status: "posted" as const, finalBody: body, postedUrl: commentUrl };
     } catch (err) {
       await setCandidateStatus(candidateId, "failed");
+      await recordError("touch.act", err, { candidateId, touchId, threadUrl: signal!.url });
       return {
         ...inputData,
         status: "failed" as const,

@@ -1,4 +1,5 @@
 import { getPool } from "./lib/db";
+import { recordError } from "./lib/errors";
 import { mastra } from "./index";
 import { dbGuardrailDeps } from "./scorers/spam-guardrail";
 
@@ -90,6 +91,7 @@ export async function dispatchOnce(): Promise<DispatchResult> {
           reason: touch?.reason,
         };
       } catch (err) {
+        await recordError("dispatcher.run", err, { candidateId, runId: run.runId });
         return { candidateId, runId: run.runId, runStatus: "error", reason: (err as Error).message };
       }
     }),
