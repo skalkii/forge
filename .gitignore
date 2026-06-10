@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# Build output
+dist/
+build/
+.next/
+.turbo/
+.mastra/output/
+.mastra/cache/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Coverage / test
+coverage/
+.nyc_output/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Postgres data dir (docker compose volume)
+.postgres-data/
+
+# Submission artifacts that are generated (kept locally, regenerated from data)
+submission/walkthrough.mp4

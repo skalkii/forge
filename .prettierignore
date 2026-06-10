@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+.next/
+.mastra/
+coverage/
+pnpm-lock.yaml
+*.md.bak
+submission/walkthrough.mp4
