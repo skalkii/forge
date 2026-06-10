@@ -29,6 +29,12 @@ export default function SettingsPage() {
           >
             GitHub →
           </Link>
+          <Link
+            href="/settings/data"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Data →
+          </Link>
         </div>
         <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
           Which AI models the agent runs on, and whether their credentials are in place. Two
