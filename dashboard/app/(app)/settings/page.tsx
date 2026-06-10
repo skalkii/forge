@@ -23,6 +23,12 @@ export default function SettingsPage() {
           <Link href="/settings/db" className="text-xs text-muted-foreground hover:text-foreground">
             Database →
           </Link>
+          <Link
+            href="/settings/github"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            GitHub →
+          </Link>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           Model routing and provider configuration, read from the root <code>.env</code>.
