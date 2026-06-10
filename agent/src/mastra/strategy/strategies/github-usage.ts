@@ -4,18 +4,26 @@ import type { MetricStrategy } from "../types";
  * GitHub → Usage: find devs hand-rolling what VideoDB does natively,
  * measure cost per developer reaching first_successful_api_call.
  *
- * Queries are starting points (R10): decomposed into qualifier form and
- * false-positive-checked against live GitHub search at commit 20 (V4).
+ * Queries verified against live GitHub search 2026-06-10 (R10, commit 20).
+ * Originals failed: long quoted phrases returned 0; bare OR doesn't scope
+ * in legacy issue search (17,933 garbage hits). These use short qualifier
+ * form — moderate volume, fresh results; triage filters residual noise
+ * (bot authors, paper-digest repos).
  */
 export const githubUsage: MetricStrategy = {
   id: "github-usage",
   targets: {
     source: "github",
     queries: [
-      'ffmpeg extract frames "every n seconds" is:issue',
-      "whisper transcribe video timestamps in:title,body",
-      "search inside video for moment OR scene state:open",
-      '"give my agent" vision screenshot frames in:body',
+      // frame extraction (377 total, real hand-rolled-pipeline hits in top 10)
+      "extract frames from video ffmpeg is:issue is:open in:title,body",
+      // transcription + search (229 total, best precision of the set)
+      "whisper transcribe video timestamps is:issue is:open",
+      // scene / semantic video search — two narrow phrase queries replace the broken OR
+      '"search inside video" is:issue is:open', // 51 total
+      '"semantic video search" is:issue is:open', // 87 total
+      // agent vision (191 total; replaces the dead '"give my agent"' phrase = 0 hits)
+      "agent vision video frames screenshot is:issue is:open",
     ],
     freshnessHours: 72,
   },
