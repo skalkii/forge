@@ -248,7 +248,8 @@ DASHSCOPE_API_KEY=       # qwen/* hosted models
 OPENROUTER_API_KEY=      # openrouter/* — one key, many models incl. :free tiers
 OLLAMA_BASE_URL=         # default http://localhost:11434
 
-# GitHub (App for read + higher limits)
+# GitHub (App for read + higher limits; GITHUB_TOKEN PAT is a dev fallback)
+GITHUB_TOKEN=
 GITHUB_APP_ID=
 GITHUB_APP_PRIVATE_KEY=
 GITHUB_APP_INSTALLATION_ID=

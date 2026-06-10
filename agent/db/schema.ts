@@ -169,6 +169,27 @@ export const auditLog = pgTable(
   (t) => [index("audit_log_at_idx").on(t.at)],
 );
 
+/** R4 — every GitHub API call with its live rate-budget headers. Backs /settings/github. */
+export const githubRequests = pgTable(
+  "github_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    resource: text("resource").notNull(), // search | core | ... (x-ratelimit-resource)
+    method: text("method").notNull(),
+    route: text("route").notNull(),
+    status: integer("status"),
+    rateLimit: integer("rate_limit"),
+    rateRemaining: integer("rate_remaining"),
+    rateResetAt: timestamp("rate_reset_at", { withTimezone: true }),
+    latencyMs: integer("latency_ms"),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("github_requests_at_idx").on(t.at),
+    index("github_requests_resource_idx").on(t.resource),
+  ],
+);
+
 /** Single-row operational flags (R6 kill-switch lives here, not in env). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
@@ -185,6 +206,7 @@ export const allTables = {
   outcomes,
   costEvents,
   auditLog,
+  githubRequests,
   settings,
 } as const;
 
@@ -195,3 +217,4 @@ export type Touch = typeof touches.$inferSelect;
 export type Outcome = typeof outcomes.$inferSelect;
 export type CostEvent = typeof costEvents.$inferSelect;
 export type AuditEntry = typeof auditLog.$inferSelect;
+export type GithubRequest = typeof githubRequests.$inferSelect;

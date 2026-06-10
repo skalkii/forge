@@ -15,6 +15,20 @@
       "when": 1781067453744,
       "tag": "0001_notify_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781068934961,
+      "tag": "0002_github_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781068949548,
+      "tag": "0003_github_requests_notify",
+      "breakpoints": true
     }
   ]
 }
