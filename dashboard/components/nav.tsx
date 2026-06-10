@@ -9,7 +9,7 @@ const items: { href: string; label: string; built: boolean }[] = [
   { href: "/candidates", label: "Candidates", built: false },
   { href: "/drafts", label: "Drafts", built: false },
   { href: "/runs", label: "Runs", built: false },
-  { href: "/snippets", label: "Snippets", built: false },
+  { href: "/snippets", label: "Snippets", built: true },
   { href: "/strategy", label: "Strategy", built: true },
   { href: "/experiments", label: "Experiments", built: false },
   { href: "/costs", label: "Costs", built: true },
