@@ -5,6 +5,9 @@
   "description": "Mastra app for the VideoDB Growth Agent — agents, workflows, scorers, tools, strategy, snippets.",
   "type": "module",
   "license": "MIT",
+  "exports": {
+    "./strategy": "./src/mastra/strategy/index.ts"
+  },
   "engines": {
     "node": ">=20"
   },

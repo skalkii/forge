@@ -267,6 +267,9 @@ DATABASE_URL=postgres://forge:forge@localhost:5432/forge
 UTM_BASE_URL=
 DASHBOARD_URL=
 
+# Metric strategy (strategy/registry.ts picks by id; default github-usage)
+METRIC_STRATEGY=github-usage
+
 # Safety limits / config
 DAILY_TOUCH_CAP=20
 QUALIFY_THRESHOLD=0.7
