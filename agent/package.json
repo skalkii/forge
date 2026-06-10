@@ -25,6 +25,7 @@
     "attribute": "tsx scripts/run-attribution.ts",
     "purge": "tsx scripts/run-purge.ts",
     "forget-user": "tsx scripts/forget-user.ts",
+    "preflight": "tsx scripts/preflight.ts",
     "seed:experiments": "tsx scripts/seed-experiments.ts",
     "validate:snippets": "tsx scripts/validate-snippets.ts"
   },
