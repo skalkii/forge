@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { agentVisionCode } from "./templates/agent-vision";
+import { frameExtractionCode } from "./templates/frame-extraction";
+import { sceneSearchCode } from "./templates/scene-search";
 import { transcribeSearchCode } from "./templates/transcribe-search";
 
 /**
@@ -51,6 +54,74 @@ export const snippetRegistry: Record<string, SnippetTemplate> = {
       query: "what is videodb",
     },
     code: transcribeSearchCode,
+  },
+  "scene-search": {
+    id: "scene-search",
+    capability: "scene-search",
+    title: "Index + search what's visually on screen",
+    description:
+      "Dev is sampling frames and captioning/embedding them to find visual moments ('search inside video for a scene'). index_scenes() captions every shot server-side; search(search_type=scene) answers natural-language visual queries with timestamps.",
+    params: z.strictObject({
+      videoUrl,
+      query: z
+        .string()
+        .min(1)
+        .describe("natural-language description of the visual moment the dev wants to find"),
+      scenePrompt: z
+        .string()
+        .min(1)
+        .default("Describe the visual content of the scene, focusing on objects, people, and actions.")
+        .describe("instruction for how scenes should be captioned during indexing"),
+    }),
+    sampleParams: {
+      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      query: "a large rabbit in a meadow",
+      scenePrompt:
+        "Describe the visual content of the scene, focusing on objects, people, and actions.",
+    },
+    code: sceneSearchCode,
+  },
+  "frame-extraction": {
+    id: "frame-extraction",
+    capability: "frame-extraction",
+    title: "Extract frames every N seconds (no ffmpeg)",
+    description:
+      "Dev is wrestling with ffmpeg fps filters / temp files to pull frames at an interval. extract_scenes(time_based) returns hosted frame URLs in a few lines — no ffmpeg, no local storage.",
+    params: z.strictObject({
+      videoUrl,
+      intervalSec: z
+        .number()
+        .int()
+        .min(1)
+        .max(3600)
+        .describe("sampling interval in seconds, taken from the dev's stated requirement"),
+    }),
+    sampleParams: {
+      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      intervalSec: 10,
+    },
+    code: frameExtractionCode,
+  },
+  "agent-vision": {
+    id: "agent-vision",
+    capability: "agent-vision",
+    title: "Hosted frame URLs for a vision model / agent",
+    description:
+      "Dev wants their AI agent to 'see' a video (screenshot loops, manual frame grabs feeding a vision LLM). Sampled frames come back as hosted image URLs that drop straight into any multimodal model.",
+    params: z.strictObject({
+      videoUrl,
+      intervalSec: z
+        .number()
+        .int()
+        .min(1)
+        .max(3600)
+        .describe("how often the agent needs a frame, in seconds"),
+    }),
+    sampleParams: {
+      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      intervalSec: 15,
+    },
+    code: agentVisionCode,
   },
 };
 
