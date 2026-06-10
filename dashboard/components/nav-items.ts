@@ -41,7 +41,7 @@ export const navItems: NavItem[] = [
     href: "/candidates",
     label: "Candidates",
     icon: Compass,
-    built: false,
+    built: true,
     blurb: "Signals that passed triage, moving through qualify → craft → review.",
   },
   {
