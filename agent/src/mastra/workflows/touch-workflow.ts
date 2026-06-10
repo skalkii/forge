@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { buildCraftPrompt, craftAgent, craftOutputSchema } from "../agents/craft-agent";
 import { buildQualifyPrompt, qualifyAgent, qualifyOutputSchema } from "../agents/qualify-agent";
+import { assignExperiment, buildUtmLink } from "../lib/attribution";
 import { getPool } from "../lib/db";
 import { disclosureText } from "../lib/disclosure";
 import { recordError } from "../lib/errors";
@@ -59,6 +60,7 @@ const touchStateSchema = z.object({
   snippetCode: z.string().optional(),
   draftBody: z.string().optional(),
   touchId: z.string().optional(),
+  variant: z.string().nullish(),
   guardrail: scorerResultSchema.optional(),
   quality: scorerResultSchema.nullish(),
   finalBody: z.string().optional(),
@@ -272,11 +274,14 @@ const scorersStep = createStep({
       await recordError("touch.quality-judge", err, { candidateId });
     }
 
+    // R5: variant assigned here, where the touch row is born — deterministic
+    // per candidate, logged on the row, later carried on utm_content
+    const assignment = await assignExperiment(candidateId);
     const inserted = await getPool().query<{ id: string }>(
-      `INSERT INTO touches (candidate_id, template_id, draft_body, disclosure_ok)
-       VALUES ($1, $2, $3, true)
+      `INSERT INTO touches (candidate_id, experiment_id, variant, template_id, draft_body, disclosure_ok)
+       VALUES ($1, $2, $3, $4, $5, true)
        RETURNING id`,
-      [candidateId, inputData.templateId, draftBody],
+      [candidateId, assignment.experimentId, assignment.variant, inputData.templateId, draftBody],
     );
     await setCandidateStatus(candidateId, "review");
 
@@ -284,6 +289,7 @@ const scorersStep = createStep({
       ...inputData,
       draftBody,
       touchId: inserted.rows[0].id,
+      variant: assignment.variant,
       guardrail: guardrailResult,
       quality,
     };
@@ -365,15 +371,6 @@ const humanGateStep = createStep({
   },
 });
 
-function buildUtmLink(touchId: string): string {
-  const { utmSource, utmMedium } = getActiveStrategy().attributionMap;
-  const url = new URL(process.env.UTM_BASE_URL || "https://docs.videodb.io/");
-  url.searchParams.set("utm_source", utmSource);
-  url.searchParams.set("utm_medium", utmMedium);
-  url.searchParams.set("utm_campaign", touchId);
-  return `Docs: ${url.toString()}`;
-}
-
 const actStep = createStep({
   id: "act",
   inputSchema: touchStateSchema,
@@ -391,7 +388,7 @@ const actStep = createStep({
       };
     }
 
-    const body = `${finalBody}\n\n${buildUtmLink(touchId!)}`;
+    const body = `${finalBody}\n\n${buildUtmLink(touchId!, inputData.variant)}`;
     try {
       const { commentUrl } = await postGithubComment({ threadUrl: signal!.url, body });
       await getPool().query(

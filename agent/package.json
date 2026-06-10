@@ -22,6 +22,7 @@
     "test": "vitest run",
     "loop": "tsx scripts/run-discovery.ts",
     "dispatch": "tsx scripts/run-dispatcher.ts",
+    "seed:experiments": "tsx scripts/seed-experiments.ts",
     "validate:snippets": "tsx scripts/validate-snippets.ts"
   },
   "dependencies": {
