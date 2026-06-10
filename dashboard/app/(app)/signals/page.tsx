@@ -6,6 +6,14 @@ import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+const DupRow = z.object({
+  id: z.string(),
+  url: z.string(),
+  repo: z.string(),
+  author: z.string(),
+  title: z.string(),
+});
+
 const SignalRow = z.object({
   id: z.string(),
   external_id: z.string(),
@@ -17,6 +25,8 @@ const SignalRow = z.object({
   query: z.string(),
   found_at: z.coerce.date(),
   created_at: z.coerce.date(),
+  embedded: z.boolean(),
+  dups: z.array(DupRow),
 });
 
 const QueryRow = z.object({ query: z.string(), n: z.coerce.number() });
@@ -32,11 +42,24 @@ async function loadSignals(q?: string, repo?: string) {
     params.push(`%${repo}%`);
     where.push(`repo ILIKE $${params.length}`);
   }
+  // canonical rows only — near-dups collapse under their cluster head (19b)
+  where.push("dup_of IS NULL");
   return query(
     SignalRow,
-    `SELECT * FROM signals
-      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-      ORDER BY found_at DESC
+    `SELECT s.id, s.external_id, s.url, s.repo, s.author, s.title, s.excerpt,
+            s.query, s.found_at, s.created_at,
+            s.embedding IS NOT NULL AS embedded,
+            COALESCE(
+              (SELECT json_agg(json_build_object(
+                        'id', d.id, 'url', d.url, 'repo', d.repo,
+                        'author', d.author, 'title', d.title)
+                      ORDER BY d.found_at)
+                 FROM signals d WHERE d.dup_of = s.id),
+              '[]'::json
+            ) AS dups
+       FROM signals s
+      WHERE ${where.join(" AND ")}
+      ORDER BY s.found_at DESC
       LIMIT 100`,
     params,
   );
@@ -137,7 +160,39 @@ export default async function SignalsPage({
                       >
                         {s.query}
                       </span>
+                      {!s.embedded && (
+                        <span
+                          className="rounded bg-muted px-1.5 py-0.5"
+                          title="not yet embedded — dedup pending"
+                        >
+                          pending dedup
+                        </span>
+                      )}
                     </div>
+                    {s.dups.length > 0 && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-[11px] text-amber-600 dark:text-amber-400">
+                          {s.dups.length} near-duplicate{s.dups.length > 1 ? "s" : ""} collapsed
+                        </summary>
+                        <ul className="mt-1.5 space-y-1 border-l-2 border-amber-500/30 pl-3">
+                          {s.dups.map((d) => (
+                            <li key={d.id} className="text-xs text-muted-foreground">
+                              <a
+                                href={d.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:underline"
+                              >
+                                {d.title}
+                              </a>{" "}
+                              <span className="font-mono text-[11px]">
+                                {d.repo} · {d.author}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                   </div>
                   <JsonModal title={`signals/${s.id.slice(0, 8)}`} data={s} />
                 </div>
