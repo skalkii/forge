@@ -20,6 +20,7 @@ import {
   real,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   vector,
 } from "drizzle-orm/pg-core";
@@ -139,7 +140,30 @@ export const outcomes = pgTable(
     attributedAt: timestamp("attributed_at", { withTimezone: true }).notNull().defaultNow(),
     meta: jsonb("meta").$type<Record<string, unknown>>(),
   },
-  (t) => [index("outcomes_touch_idx").on(t.touchId)],
+  (t) => [
+    index("outcomes_touch_idx").on(t.touchId),
+    // one signup + one activation per touch, ever — keeps the join idempotent
+    uniqueIndex("outcomes_touch_event_uq").on(t.touchId, t.event),
+  ],
+);
+
+/**
+ * R10 stub — inbound signup/activation events. Until VideoDB delivers a real
+ * feed (webhook/export), rows land here by hand or import; the attribution
+ * join consumes them and never re-reads a processed row.
+ */
+export const signupEvents = pgTable(
+  "signup_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    event: outcomeEvent("event").notNull(),
+    utmCampaign: text("utm_campaign").notNull(), // should be a touch id
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
+    meta: jsonb("meta").$type<Record<string, unknown>>(),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("signup_events_processed_idx").on(t.processedAt)],
 );
 
 /** Paid API calls — backs /costs and spend-and-efficiency.csv. */
@@ -256,6 +280,7 @@ export const allTables = {
   experiments,
   touches,
   outcomes,
+  signupEvents,
   costEvents,
   auditLog,
   githubRequests,
@@ -270,6 +295,7 @@ export type Candidate = typeof candidates.$inferSelect;
 export type Experiment = typeof experiments.$inferSelect;
 export type Touch = typeof touches.$inferSelect;
 export type Outcome = typeof outcomes.$inferSelect;
+export type SignupEvent = typeof signupEvents.$inferSelect;
 export type CostEvent = typeof costEvents.$inferSelect;
 export type AuditEntry = typeof auditLog.$inferSelect;
 export type GithubRequest = typeof githubRequests.$inferSelect;

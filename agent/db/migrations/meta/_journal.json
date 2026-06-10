@@ -78,6 +78,20 @@
       "when": 1781081892529,
       "tag": "0010_errors_notify",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781083339479,
+      "tag": "0011_signup_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781083340163,
+      "tag": "0012_signup_events_notify",
+      "breakpoints": true
     }
   ]
 }

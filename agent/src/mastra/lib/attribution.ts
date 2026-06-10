@@ -43,3 +43,85 @@ export function buildUtmLink(touchId: string, variant?: string | null): string {
   if (variant) url.searchParams.set("utm_content", variant);
   return `Docs: ${url.toString()}`;
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export interface AttributionResult {
+  events: number;
+  attributed: number;
+  outsideWindow: number;
+  unmatched: number;
+}
+
+/**
+ * The attribution join (R10 — the signup feed is a stub table until VideoDB
+ * delivers a real event source). Matches unprocessed signup_events to posted
+ * touches on utm_campaign == touch id, enforces the strategy's attribution
+ * window against posted_at, and writes outcomes rows. Idempotent twice over:
+ * events are marked processed, and outcomes has a unique (touch_id, event)
+ * index with ON CONFLICT DO NOTHING.
+ */
+export async function attributeOnce(): Promise<AttributionResult> {
+  const pool = getPool();
+  const windowDays = getActiveStrategy().attributionMap.windowDays;
+  const result: AttributionResult = { events: 0, attributed: 0, outsideWindow: 0, unmatched: 0 };
+
+  const { rows: events } = await pool.query<{
+    id: string;
+    event: string;
+    utm_campaign: string;
+    occurred_at: Date;
+    meta: Record<string, unknown> | null;
+  }>(
+    `SELECT id, event, utm_campaign, occurred_at, meta
+       FROM signup_events
+      WHERE processed_at IS NULL
+      ORDER BY received_at
+      LIMIT 500`,
+  );
+  result.events = events.length;
+
+  for (const ev of events) {
+    let resolution: string;
+
+    const touch = UUID_RE.test(ev.utm_campaign)
+      ? (
+          await pool.query<{ id: string; posted_at: Date }>(
+            `SELECT id, posted_at FROM touches WHERE id = $1 AND posted_at IS NOT NULL`,
+            [ev.utm_campaign],
+          )
+        ).rows[0]
+      : undefined;
+
+    if (!touch) {
+      resolution = "unmatched";
+      result.unmatched += 1;
+    } else {
+      const ageDays =
+        (ev.occurred_at.getTime() - touch.posted_at.getTime()) / (24 * 60 * 60 * 1000);
+      if (ageDays < 0 || ageDays > windowDays) {
+        resolution = "outside-window";
+        result.outsideWindow += 1;
+      } else {
+        await pool.query(
+          `INSERT INTO outcomes (touch_id, event, occurred_at, meta)
+           VALUES ($1, $2::outcome_event, $3, $4)
+           ON CONFLICT (touch_id, event) DO NOTHING`,
+          [touch.id, ev.event, ev.occurred_at, ev.meta ? JSON.stringify(ev.meta) : null],
+        );
+        resolution = "attributed";
+        result.attributed += 1;
+      }
+    }
+
+    await pool.query(
+      `UPDATE signup_events
+          SET processed_at = now(),
+              meta = COALESCE(meta, '{}'::jsonb) || jsonb_build_object('resolution', $2::text)
+        WHERE id = $1`,
+      [ev.id, resolution],
+    );
+  }
+
+  return result;
+}
