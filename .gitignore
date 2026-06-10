@@ -45,3 +45,6 @@ local_cache/
 
 # python venv (snippet validator)
 .venv/
+
+# Claude Code session state
+.claude/
