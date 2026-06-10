@@ -13,9 +13,9 @@
 3. **Value-first + capped.** The agent proceeds only when VideoDB is genuinely the best answer. Enforce `DAILY_TOUCH_CAP`, dedup (never touch the same person/thread twice), and a global kill-switch.
 4. **Respect platform rules.** GitHub's Acceptable Use Policy forbids bulk/promotional posting in others' threads. Stay within rate limits; the posting identity is a real human account (`GITHUB_POST_AS`), never a bot.
 5. **Never hardcode the metric.** All metric-specific logic lives behind the `MetricStrategy` interface. The engine is metric-agnostic; only `strategy/strategies/github-usage.ts` knows what we're optimizing.
-6. **Affiliation disclosure (per HANDOVER R3).** Every public touch MUST include a short, plain affiliation disclosure (`DISCLOSURE_TEXT` env var). The `spam-guardrail` scorer hard-fails any draft missing it via deterministic string/pattern check.
+6. **Affiliation disclosure (R3).** Every public touch MUST include a short, plain affiliation disclosure (`DISCLOSURE_TEXT` env var). The `spam-guardrail` scorer hard-fails any draft missing it via deterministic string/pattern check.
 
-> **Authoritative override.** Where this file conflicts with `HANDOVER.md`, **HANDOVER wins**. HANDOVER absorbs corrections R1–R10 found during architecture audit (split workflows, snippet templates, disclosure, dual rate budgets, experiments dimension, queue auth, data minimization, Mastra API reconciliation, illustrative-numbers caveat, open VideoDB questions).
+> **Audit revisions absorbed.** An architecture audit of the original plan produced corrections R1–R10 (formerly `HANDOVER.md`, now merged into this file). The R-numbers are kept as shorthand throughout; the full changelist is in the [Audit revisions](#audit-revisions-r1r10) section below.
 
 ---
 
@@ -38,7 +38,7 @@ One loop: **Sense → Qualify → Craft → [human gate] → Act → Observe →
 
 Only **triage / qualify / craft** are agents. Everything else is plain typed code. Money (Exa/Parallel) is spent only *after* triage passes.
 
-Per **HANDOVER R1**, the loop is implemented as **two workflows**:
+Per **R1**, the loop is implemented as **two workflows**:
 
 ```
 workflows/
@@ -131,7 +131,7 @@ export interface MetricStrategy {
 }
 ```
 
-`src/mastra/strategy/strategies/github-usage.ts` — the locked strategy. Per **HANDOVER R10**, queries listed below are starting points; verify against real GitHub Search syntax before relying on them (`in:title,body`, `language:`, `state:open`, etc.).
+`src/mastra/strategy/strategies/github-usage.ts` — the locked strategy. Per **R10**, queries listed below are starting points; verify against real GitHub Search syntax before relying on them (`in:title,body`, `language:`, `state:open`, etc.).
 
 ```ts
 export const githubUsage: MetricStrategy = {
@@ -197,6 +197,25 @@ Metrics we report: **cost per activated developer** (headline), **qualified-touc
 - **Typing** — all tool/step inputs & outputs are Zod schemas.
 - **Secrets** — never commit; keep `.env.example` in sync with any new key.
 - **Data minimization (R7)** — store only public GitHub data needed for the touch (username, URL, repo, excerpt). No emails, no profile scraping. Retention purge for old signals; deletion-by-username script.
+
+---
+
+## Audit revisions (R1–R10)
+
+The actionable changelist from the architecture audit (formerly `HANDOVER.md`). Priority order was **R1, R2, R3** — they change the build's shape; R4–R10 are applied along the way. Everything below is already reflected in the sections above; this is the canonical record of *why*, plus details not repeated elsewhere.
+
+- **R1 · Split the workflow: discovery vs per-candidate touch.** A single linear workflow can't work: discovery returns a *batch* of candidates, but `suspend()` pauses the *entire run* — the first candidate awaiting review would block all others. Hence `discovery-workflow` (never suspends) + `touch-workflow` (one run per candidate, exactly one suspend), with the run ID stored on the candidate/draft row so the queue can resume the right run. **Acceptance check:** 5 candidates pending review = 5 independently resumable runs; approving #3 must not affect #1.
+- **R2 · Validated template library, never freeform code.** Live-executing LLM-generated Python from a TS app means a sandboxed subprocess (real work, real risk), and LLM code posted publicly under VideoDB's name is a brand hazard even with QA. So: craft agent *selects* a template + params (Zod-validated); the validator is an offline nightly/CI job (a small Python script is fine — it's tooling, not the request path). **If no template fits a candidate's problem → route to "no touch" or a cookbook-PR escalation. Never improvise code.** Templates are maintained by hand; reviewers learn them, which speeds review.
+- **R3 · Affiliation disclosure on every public touch.** A helpful reply recommending VideoDB *without* disclosing affiliation is astroturfing by most community standards; being unmasked later is a worse brand event than never posting. Disclosure is constraint #6: injected into craft instructions, deterministically hard-failed by the spam-guardrail, shown highlighted in the gate UI. Ship with a sensible default wording; VideoDB's preferred wording is tracked in `OPEN_QUESTIONS.md` — don't block on it.
+- **R4 · GitHub search is its own, much smaller budget.** The Search API allows roughly 30 req/min — separate from the App's ~15k/hr core limit, and search is exactly what Sense uses. Core limits also vary by installation size. Both budgets are read live from rate-limit headers, never hardcoded. Discovery is a low-frequency poller (`DISCOVERY_INTERVAL_MIN`), results diffed against seen signals; honor `Retry-After`, never retry-hammer; serialize writes ≥1s apart.
+- **R5 · Instrument experiments end-to-end.** The Forge requires ≥3 experiments; without a variant dimension results would be unmeasurable. `touches` gains `experiment_id` + `variant`; variant rides on `utm_content` (keep `utm_campaign` = touch id); attribution join groups by experiment/variant. `experiments` table: `id, name, hypothesis, variable, status, started_at, ended_at` (feeds the `experiments/` submission folder). **Variant assignment is deterministic (hash of candidate id), logged on the touch row.**
+- **R6 · The review queue is a security boundary.** It's the only path to public posting — never an open URL. Auth mandatory (`REVIEW_QUEUE_SECRET`). Approve / edit / reject; **edits persist before resume**; every action calls Mastra's resume API with the stored run ID; decision + editor identity logged on the touch row. UI shows daily-cap status + global kill-switch the touch workflow checks before `act`.
+- **R7 · Data minimization.** Only public data needed for the touch: username, thread/issue URL, repo, matched excerpt. No emails, no profile scraping, no personal-data enrichment. Deletion-by-username script; purge raw unqualified signals past `SIGNAL_RETENTION_DAYS`.
+- **R8 · All Mastra sketches are pseudocode until verified.** The API moves fast; step input/output schemas must line up (or use explicit `.map()`). Patterns in this file were reconciled against `@mastra/core` 1.41 — re-verify on any Mastra upgrade, including the Postgres/pgvector adapter setup.
+- **R9 · Never present projected conversion as a target.** The original 5,000 → 500 → 200 funnel illustration implied a 40% signup→activation rate — generous for dev tools, and it quietly anchors expectations. Mark any funnel numbers loudly as shape-only or use conservative placeholders until VideoDB supplies a baseline.
+- **R10 · Open questions live in `OPEN_QUESTIONS.md`.** Questions for VideoDB (reviewer identity, Day-14 "production" definition, scope policy, disclosure wording, cookbook guide, existing GitHub App) plus the verify-at-build-time list: current Mastra APIs (R8), Exa + Parallel pricing, the org's actual GitHub App limits (R4), and strategy search queries tested against GitHub's real search syntax — long phrase queries may need decomposing into shorter qualifier-based forms.
+
+**One-line summary:** same thesis, sounder machine — un-block the human gate by splitting the workflow per candidate, stop generating code in favor of validated templates, disclose affiliation on every touch, budget GitHub search separately, and make experiments measurable.
 
 ---
 
@@ -272,7 +291,7 @@ TOUCHES_ENABLED=false          # final gate before any post-approval action runs
 
 ---
 
-## Build order (per HANDOVER, replaces the original)
+## Build order (post-audit, replaces the original)
 
 1. **Step 0 (R8):** read current Mastra docs; reconcile + patch this file.
 2. Scaffold; `lib/models.ts` (provider-agnostic); `db/schema.ts` **including R5 experiment fields and R7 minimal-data shape**; migrations.

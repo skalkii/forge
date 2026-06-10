@@ -31,4 +31,4 @@ db/{schema.ts,migrations/}      # signals, candidates, experiments, touches, out
 
 `@mastra/libsql` is the initial storage adapter from the scaffold; it gets swapped for `@mastra/pg` (PostgresStore + PgVector) in a later commit once the schema lands.
 
-See `../CLAUDE.md` + `../HANDOVER.md` for the authoritative spec, and `../OPEN_QUESTIONS.md` for live unknowns.
+See `../CLAUDE.md` for the authoritative spec (audit revisions R1–R10 absorbed), and `../OPEN_QUESTIONS.md` for live unknowns.

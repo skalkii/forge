@@ -8,7 +8,7 @@ Growth agent for the **VideoDB Forge** program.
 
 ## Status
 
-Day-by-day build toward the Forge submission. Commits follow the plan in `/Users/kal/.claude/plans/claude-md-videodb-polished-brook.md` (also tracked in conversation). Authoritative spec lives in [`CLAUDE.md`](./CLAUDE.md); [`HANDOVER.md`](./HANDOVER.md) overrides where they disagree.
+Day-by-day build toward the Forge submission. Commits follow the plan in `/Users/kal/.claude/plans/claude-md-videodb-polished-brook.md` (also tracked in conversation). Authoritative spec lives in [`CLAUDE.md`](./CLAUDE.md) (audit revisions R1–R10 absorbed).
 
 ## Quickstart (local-first)
 
@@ -34,7 +34,7 @@ submission/    Forge deliverables — fills in across the build
 
 ## Non-negotiables
 
-This is **not** a spam engine. Every public action is human-approved via a Mastra workflow `suspend()`. The disclosure constraint (R3 in `HANDOVER.md`) requires an affiliation line on every touch. The spam-guardrail scorer hard-fails any draft missing it.
+This is **not** a spam engine. Every public action is human-approved via a Mastra workflow `suspend()`. The disclosure constraint (R3 in `CLAUDE.md`) requires an affiliation line on every touch. The spam-guardrail scorer hard-fails any draft missing it.
 
 ## License
 

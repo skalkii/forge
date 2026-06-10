@@ -12,4 +12,4 @@ Stack: App Router, Tailwind v4, shadcn/ui. Panels land module by module per the 
 auth gate (R6), SSE backbone (Postgres LISTEN/NOTIFY), signals feed, candidates, drafts review
 queue, runs board, snippets, strategy, experiments, costs, errors, settings.
 
-See `../CLAUDE.md` + `../HANDOVER.md` for the authoritative spec.
+See `../CLAUDE.md` for the authoritative spec.

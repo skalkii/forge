@@ -12,7 +12,7 @@ Update as items resolve: move resolved items to a dated **Resolved** section at 
 |---|------|---------------|------------------------|
 | 1 | Signup + `first_successful_api_call` event access + UTM capture | Whole attribution metric depends on it | `lib/attribution.ts` stubbed; reads from a local `signup_events` table; switch to VideoDB event source when delivered |
 | 2 | UTM scheme + which dashboard to plug into | Final reporting target | Use `utm_source=github&utm_medium=agent-touch&utm_campaign={touchId}&utm_content={variant}`; `DASHBOARD_URL` env var |
-| 3 | Attribution window length | Conversion accounting | 21 days (HANDOVER default), `ATTRIBUTION_WINDOW_DAYS` env |
+| 3 | Attribution window length | Conversion accounting | 21 days (audit default), `ATTRIBUTION_WINDOW_DAYS` env |
 | 4 | Baseline GitHub-sourced signup→first-call numbers | Calibration of qualified-touch → activation% | Report **lower bound** only until baseline lands; flag in dashboard copy |
 | 5 | Who reviews/approves touches — us, VideoDB DevRel, or founder? | Queue auth model + SLA | Single shared `REVIEW_QUEUE_SECRET`; add GitHub OAuth allow-list when reviewers identified |
 | 6 | "Agent in production by Day 14" definition — does human-gated count? | Misalignment risk pre-deadline | Our build is human-gated by design; flag this in the next VideoDB sync |
