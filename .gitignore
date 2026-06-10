@@ -39,3 +39,6 @@ yarn-error.log*
 
 # Submission artifacts that are generated (kept locally, regenerated from data)
 submission/walkthrough.mp4
+
+# fastembed local model cache
+local_cache/

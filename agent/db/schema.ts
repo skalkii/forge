@@ -9,6 +9,7 @@
  * Every table gets a forge_notify() trigger (see migrations) so the
  * dashboard receives live change events over LISTEN/NOTIFY → SSE.
  */
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   boolean,
   index,
@@ -20,6 +21,7 @@ import {
   text,
   timestamp,
   uuid,
+  vector,
 } from "drizzle-orm/pg-core";
 
 export const candidateStatus = pgEnum("candidate_status", [
@@ -57,6 +59,9 @@ export const signals = pgTable(
     query: text("query").notNull(), // which strategy query found it
     foundAt: timestamp("found_at", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    // near-dup clustering (exact dedup is external_id UNIQUE)
+    embedding: vector("embedding", { dimensions: 384 }), // bge-small-en-v1.5, local fastembed
+    dupOf: uuid("dup_of").references((): AnyPgColumn => signals.id, { onDelete: "set null" }),
   },
   (t) => [index("signals_author_idx").on(t.author), index("signals_created_idx").on(t.createdAt)],
 );
