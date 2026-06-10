@@ -76,7 +76,7 @@ export const navItems: NavItem[] = [
     href: "/experiments",
     label: "Experiments",
     icon: Beaker,
-    built: false,
+    built: true,
     blurb: "A/B variants and their funnels, joined to real outcomes.",
   },
   {
