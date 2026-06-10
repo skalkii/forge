@@ -55,7 +55,7 @@ export const navItems: NavItem[] = [
     href: "/runs",
     label: "Runs",
     icon: Workflow,
-    built: false,
+    built: true,
     blurb: "Every workflow run: running, suspended at review, done, failed.",
   },
   {
