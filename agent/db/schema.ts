@@ -195,6 +195,23 @@ export const githubRequests = pgTable(
   ],
 );
 
+/** Retrieval (Exa/Parallel) response cache — hit rate backs /costs/retrieval. */
+export const retrievalCache = pgTable(
+  "retrieval_cache",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull(), // exa | parallel
+    requestHash: text("request_hash").notNull().unique(), // sha256 of normalized request
+    request: jsonb("request").$type<Record<string, unknown>>().notNull(),
+    response: jsonb("response").$type<unknown>().notNull(),
+    costUsd: real("cost_usd").notNull(), // what the original miss cost
+    hits: integer("hits").notNull().default(0), // cache hits since creation
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("retrieval_cache_provider_idx").on(t.provider)],
+);
+
 /** Single-row operational flags (R6 kill-switch lives here, not in env). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
@@ -212,6 +229,7 @@ export const allTables = {
   costEvents,
   auditLog,
   githubRequests,
+  retrievalCache,
   settings,
 } as const;
 
@@ -223,3 +241,4 @@ export type Outcome = typeof outcomes.$inferSelect;
 export type CostEvent = typeof costEvents.$inferSelect;
 export type AuditEntry = typeof auditLog.$inferSelect;
 export type GithubRequest = typeof githubRequests.$inferSelect;
+export type RetrievalCacheEntry = typeof retrievalCache.$inferSelect;

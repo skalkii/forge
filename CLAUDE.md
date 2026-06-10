@@ -258,6 +258,9 @@ GITHUB_POST_AS=          # human account used for public replies
 # Research / enrichment
 EXA_API_KEY=
 PARALLEL_API_KEY=
+RETRIEVAL_DAILY_BUDGET_USD=2       # combined exa+parallel daily cap; retrieval fails closed when hit
+EXA_COST_PER_SEARCH_USD=0.005      # estimate; Exa's actual costDollars used when returned
+PARALLEL_COST_PER_SEARCH_USD=0.005 # estimate — verify pricing (R10)
 
 # VideoDB (snippet QA + product calls)
 VIDEODB_API_KEY=

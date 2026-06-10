@@ -36,6 +36,20 @@
       "when": 1781069514879,
       "tag": "0004_signals_dedup",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781070420723,
+      "tag": "0005_retrieval_cache",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781070421370,
+      "tag": "0006_retrieval_cache_notify",
+      "breakpoints": true
     }
   ]
 }
