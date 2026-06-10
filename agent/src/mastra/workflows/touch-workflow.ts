@@ -80,8 +80,9 @@ const loadStep = createStep({
   outputSchema: touchStateSchema,
   execute: async ({ inputData, runId }) => {
     const { candidateId } = inputData;
+    // atomic claim: only one run can flip queued → qualifying, so two
+    // concurrent dispatches can never double-process the same candidate
     const { rows } = await getPool().query<{
-      status: string;
       triage_reason: string | null;
       title: string;
       excerpt: string;
@@ -89,27 +90,27 @@ const loadStep = createStep({
       url: string;
       author: string;
     }>(
-      `SELECT c.status, c.triage_reason, s.title, s.excerpt, s.repo, s.url, s.author
-         FROM candidates c
-         JOIN signals s ON s.id = c.signal_id
-        WHERE c.id = $1`,
-      [candidateId],
+      `UPDATE candidates c
+          SET status = 'qualifying', run_id = $2, updated_at = now()
+         FROM signals s
+        WHERE c.id = $1 AND c.status = 'queued' AND s.id = c.signal_id
+        RETURNING c.triage_reason, s.title, s.excerpt, s.repo, s.url, s.author`,
+      [candidateId, runId],
     );
     const row = rows[0];
     if (!row) {
-      return { candidateId, status: "failed" as const, reason: `candidate not found: ${candidateId}` };
-    }
-    if (row.status !== "queued") {
+      const { rows: existing } = await getPool().query<{ status: string }>(
+        `SELECT status FROM candidates WHERE id = $1`,
+        [candidateId],
+      );
       return {
         candidateId,
         status: "failed" as const,
-        reason: `candidate is '${row.status}', expected 'queued' — refusing to double-process`,
+        reason: existing[0]
+          ? `candidate is '${existing[0].status}', expected 'queued' — refusing to double-process`
+          : `candidate not found: ${candidateId}`,
       };
     }
-    await getPool().query(
-      `UPDATE candidates SET status = 'qualifying', run_id = $2, updated_at = now() WHERE id = $1`,
-      [candidateId, runId],
-    );
     return {
       candidateId,
       status: "running" as const,
