@@ -29,6 +29,7 @@ const PROVIDER_KEY_ENV: Record<string, string> = {
   deepseek: "DEEPSEEK_API_KEY",
   mistral: "MISTRAL_API_KEY",
   qwen: "DASHSCOPE_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
   ollama: "OLLAMA_BASE_URL",
 };
 

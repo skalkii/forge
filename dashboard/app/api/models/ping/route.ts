@@ -4,7 +4,7 @@ import { pingProvider } from "@/lib/server/models";
 
 export const runtime = "nodejs";
 
-const KNOWN = new Set(["openai", "anthropic", "deepseek", "mistral", "qwen", "ollama"]);
+const KNOWN = new Set(["openai", "anthropic", "deepseek", "mistral", "qwen", "openrouter", "ollama"]);
 
 export async function POST(req: Request) {
   let provider: unknown;

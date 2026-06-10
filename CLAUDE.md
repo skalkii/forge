@@ -245,6 +245,7 @@ OPENAI_API_KEY=
 DEEPSEEK_API_KEY=
 MISTRAL_API_KEY=
 DASHSCOPE_API_KEY=       # qwen/* hosted models
+OPENROUTER_API_KEY=      # openrouter/* — one key, many models incl. :free tiers
 OLLAMA_BASE_URL=         # default http://localhost:11434
 
 # GitHub (App for read + higher limits)

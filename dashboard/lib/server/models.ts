@@ -15,6 +15,7 @@ const PROVIDER_KEY_ENV: Record<string, string> = {
   deepseek: "DEEPSEEK_API_KEY",
   mistral: "MISTRAL_API_KEY",
   qwen: "DASHSCOPE_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
   ollama: "OLLAMA_BASE_URL",
 };
 
@@ -108,6 +109,10 @@ export async function pingProvider(
     case "mistral":
       url = "https://api.mistral.ai/v1/models";
       headers.Authorization = `Bearer ${process.env.MISTRAL_API_KEY ?? ""}`;
+      break;
+    case "openrouter":
+      url = "https://openrouter.ai/api/v1/models";
+      headers.Authorization = `Bearer ${process.env.OPENROUTER_API_KEY ?? ""}`;
       break;
     case "qwen":
       url = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models";
