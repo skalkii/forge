@@ -51,7 +51,7 @@ export const snippetRegistry: Record<string, SnippetTemplate> = {
     }),
     sampleParams: {
       videoUrl: "https://www.youtube.com/watch?v=WDv4AWk0J3U",
-      query: "what is videodb",
+      query: "morning sunlight",
     },
     code: transcribeSearchCode,
   },
@@ -74,8 +74,9 @@ export const snippetRegistry: Record<string, SnippetTemplate> = {
         .describe("instruction for how scenes should be captioned during indexing"),
     }),
     sampleParams: {
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      query: "a large rabbit in a meadow",
+      // VideoDB's own docs sample — direct-file URLs can hit "Download failed"
+      videoUrl: "https://www.youtube.com/watch?v=WDv4AWk0J3U",
+      query: "a man speaking indoors",
       scenePrompt:
         "Describe the visual content of the scene, focusing on objects, people, and actions.",
     },
@@ -97,7 +98,8 @@ export const snippetRegistry: Record<string, SnippetTemplate> = {
         .describe("sampling interval in seconds, taken from the dev's stated requirement"),
     }),
     sampleParams: {
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      // VideoDB's own docs sample — direct-file URLs can hit "Download failed"
+      videoUrl: "https://www.youtube.com/watch?v=WDv4AWk0J3U",
       intervalSec: 10,
     },
     code: frameExtractionCode,
@@ -118,7 +120,8 @@ export const snippetRegistry: Record<string, SnippetTemplate> = {
         .describe("how often the agent needs a frame, in seconds"),
     }),
     sampleParams: {
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      // VideoDB's own docs sample — direct-file URLs can hit "Download failed"
+      videoUrl: "https://www.youtube.com/watch?v=WDv4AWk0J3U",
       intervalSec: 15,
     },
     code: agentVisionCode,
