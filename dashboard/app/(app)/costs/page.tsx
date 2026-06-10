@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { z } from "zod";
 
 import { JsonModal } from "@/components/json-modal";
@@ -174,7 +175,15 @@ export default async function CostsPage() {
     <div className="space-y-6">
       <RefreshOnChange tables={["cost_events"]} />
       <div>
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Costs</h1>
+        <div className="flex items-baseline gap-3">
+          <h1 className="font-heading text-xl font-semibold tracking-tight">Costs</h1>
+          <Link
+            href="/costs/retrieval"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Retrieval →
+          </Link>
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           Every paid call flows through <code>lib/cost-meter.ts</code> into{" "}
           <code>cost_events</code> and the <code>spend-and-efficiency.csv</code> deliverable. The
