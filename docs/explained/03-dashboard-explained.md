@@ -297,7 +297,7 @@ The screens are built from small reusable parts ("components"). You don't need t
 flowchart TB
     subgraph EVERY["On every screen"]
         H["Top bar: page title · 🛑 kill-switch · 🔴 live · 🌗 theme"]
-        SIDE["Left sidebar: the 11 screen links + 'Human-approved, always'"]
+        SIDE["Left sidebar (collapsible): the 11 screen links + 'Human-approved, always'"]
         BODY["The screen's own cards & tables<br/>(auto-refresh when data changes)"]
     end
 ```

@@ -1,8 +1,14 @@
+import { ScrollText } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
+import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -54,94 +60,117 @@ export default async function DbSettingsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange />
-      <div>
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">Database</h1>
-          <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
-            ← Models
-          </Link>
-        </div>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          A live look inside the database: every table, its row count, and whether it pushes
-          changes to this dashboard in real time. Below, the audit trail — every decision,
-          kill-switch flip, and deletion the system records, newest first.
-        </p>
-      </div>
+      <PageHeader
+        title="Database"
+        stage="ops"
+        description="A live look inside the database that backs the whole system. The table below lists every table with how many rows it holds and whether it pushes its changes to this dashboard in real time. Underneath sits the audit trail — a tamper-evident record of who did what."
+        sources={["pg_class", "pg_stat_user_tables", "audit_log"]}
+      >
+        <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
+          ← Settings
+        </Link>
+      </PageHeader>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Tables</h2>
-          <span className="text-xs text-muted-foreground">public schema</span>
-        </header>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-xs text-muted-foreground">
-              <th className="px-4 py-2 font-medium">Table</th>
-              <th className="px-4 py-2 text-right font-medium">Columns</th>
-              <th className="px-4 py-2 text-right font-medium">Rows</th>
-              <th className="px-4 py-2 text-right font-medium">NOTIFY</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tables.map((t) => (
-              <tr key={t.table_name} className="border-b last:border-b-0">
-                <td className="px-4 py-2 font-mono text-xs">{t.table_name}</td>
-                <td className="px-4 py-2 text-right tabular-nums">{t.column_count}</td>
-                <td className="px-4 py-2 text-right tabular-nums">{t.row_count}</td>
-                <td className="px-4 py-2 text-right">
-                  <span
-                    className={`inline-block size-1.5 rounded-full ${
-                      t.has_notify ? "bg-emerald-500" : "bg-muted-foreground/40"
-                    }`}
-                    title={t.has_notify ? "forge_notify trigger attached" : "no trigger"}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Audit log</h2>
-          <span className="text-xs text-muted-foreground">last 25 entries</span>
-        </header>
-        {audit.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-muted-foreground">
-            No audit entries yet. Decisions, kill-switch flips, and deletions land here.
-          </div>
-        ) : (
+      <SectionCard
+        title="Tables"
+        description="Every table in the database, with its column count, an approximate live row count, and whether it has a NOTIFY trigger that tells this dashboard to refresh the moment its data changes."
+        aside="public schema"
+        bodyClassName="p-0"
+      >
+        <ScrollList maxH="max-h-[30rem]">
           <table className="w-full text-sm">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-4 py-2 font-medium">At</th>
-                <th className="px-4 py-2 font-medium">Actor</th>
-                <th className="px-4 py-2 font-medium">Action</th>
-                <th className="px-4 py-2 font-medium">Subject</th>
-                <th className="px-4 py-2 font-medium">Detail</th>
+                <th className="px-4 py-2 font-medium">Table</th>
+                <th className="px-4 py-2 text-right font-medium">Columns</th>
+                <th className="px-4 py-2 text-right font-medium">Rows</th>
+                <th className="px-4 py-2 text-right font-medium">
+                  <span className="inline-flex items-center gap-1">
+                    NOTIFY
+                    <InfoTip>
+                      A green dot means this table has a trigger that pings the dashboard the instant
+                      its rows change, so the view updates live without a manual refresh.
+                    </InfoTip>
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {audit.map((row) => (
-                <tr key={row.id} className="border-b align-top last:border-b-0">
-                  <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
-                    <RelTime iso={row.at.toISOString()} />
+              {tables.map((t) => (
+                <tr key={t.table_name} className="border-b last:border-b-0">
+                  <td className="px-4 py-2 font-mono text-xs">
+                    <span className="block min-w-0 truncate">{t.table_name}</span>
                   </td>
-                  <td className="px-4 py-2">{row.actor}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{row.action}</td>
-                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
-                    {row.subject_table ? `${row.subject_table}/${row.subject_id ?? "—"}` : "—"}
-                  </td>
-                  <td className="max-w-64 truncate px-4 py-2 font-mono text-[11px] text-muted-foreground">
-                    {row.detail ? JSON.stringify(row.detail) : "—"}
+                  <td className="px-4 py-2 text-right tabular-nums">{t.column_count}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{t.row_count}</td>
+                  <td className="px-4 py-2 text-right">
+                    <span
+                      className={`inline-block size-1.5 rounded-full ${
+                        t.has_notify ? "bg-emerald-500" : "bg-muted-foreground/40"
+                      }`}
+                      title={t.has_notify ? "forge_notify trigger attached" : "no trigger"}
+                    />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </ScrollList>
+      </SectionCard>
+
+      <SectionCard
+        title="Audit log"
+        description="The system's diary of who did what: every reviewer decision, kill-switch flip, and deletion, recorded as it happens and shown newest first. It's the accountability record that proves a human stayed in control."
+        aside={
+          <span className="inline-flex items-center gap-1">
+            last 25 entries
+            <InfoTip>
+              An audit log is an append-only history of important actions — who did it, what they
+              did, and when — kept so nothing significant happens without a trace.
+            </InfoTip>
+          </span>
+        }
+        bodyClassName="p-0"
+      >
+        {audit.length === 0 ? (
+          <EmptyState icon={ScrollText} title="No audit entries yet">
+            Reviewer decisions, kill-switch flips, and deletions are recorded here as they happen.
+          </EmptyState>
+        ) : (
+          <ScrollList maxH="max-h-[30rem]">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-card">
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">At</th>
+                  <th className="px-4 py-2 font-medium">Actor</th>
+                  <th className="px-4 py-2 font-medium">Action</th>
+                  <th className="px-4 py-2 font-medium">Subject</th>
+                  <th className="px-4 py-2 font-medium">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {audit.map((row) => (
+                  <tr key={row.id} className="border-b align-top last:border-b-0">
+                    <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
+                      <RelTime iso={row.at.toISOString()} />
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className="block min-w-0 truncate">{row.actor}</span>
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs">{row.action}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
+                      {row.subject_table ? `${row.subject_table}/${row.subject_id ?? "—"}` : "—"}
+                    </td>
+                    <td className="max-w-64 truncate px-4 py-2 font-mono text-xs text-muted-foreground">
+                      {row.detail ? JSON.stringify(row.detail) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollList>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }

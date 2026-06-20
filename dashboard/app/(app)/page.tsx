@@ -1,11 +1,14 @@
-import { CircleDollarSign, Percent, ShieldAlert, Wallet } from "lucide-react";
+import { AlertTriangle, CircleDollarSign, Percent, ShieldAlert, Wallet } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
 import { ActivityStream } from "@/components/activity-stream";
-import { PageIntro } from "@/components/page-intro";
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { SectionCard } from "@/components/section-card";
 import { Sparkline } from "@/components/sparkline";
 import { StatCard } from "@/components/stat-card";
 import { query } from "@/lib/db";
@@ -108,13 +111,13 @@ function pct(n: number): string {
 }
 
 const FUNNEL_STAGES = [
-  { key: "signals", label: "Signals", hint: "raw threads found by discovery" },
-  { key: "triaged", label: "Triaged", hint: "cheap model said the pain is real" },
-  { key: "qualified", label: "Qualified", hint: "strong model said VideoDB genuinely fits" },
-  { key: "drafted", label: "Drafted", hint: "reply drafted from a validated template" },
-  { key: "approved", label: "Approved", hint: "a human approved at the gate" },
-  { key: "posted", label: "Posted", hint: "reply live on GitHub, UTM-tagged" },
-  { key: "activated", label: "Activated", hint: "first successful VideoDB API call" },
+  { key: "signals", label: "Signals", hint: "Raw GitHub threads discovery found." },
+  { key: "triaged", label: "Triaged", hint: "The cheap AI judged the pain real and worth pursuing." },
+  { key: "qualified", label: "Qualified", hint: "The strong AI confirmed VideoDB genuinely fits." },
+  { key: "drafted", label: "Drafted", hint: "A reply was written from a validated template." },
+  { key: "approved", label: "Approved", hint: "A human approved the reply at the gate." },
+  { key: "posted", label: "Posted", hint: "Reply live on GitHub, UTM-tagged." },
+  { key: "activated", label: "Activated", hint: "First successful VideoDB API call, attributed to us." },
 ] as const;
 
 export default async function OverviewPage() {
@@ -133,27 +136,32 @@ export default async function OverviewPage() {
       <RefreshOnChange
         tables={["signals", "candidates", "touches", "outcomes", "cost_events", "errors"]}
       />
-      <PageIntro title="Overview">
-        The north-star view: the cheapest path from a developer stuck on a video problem to one
-        actively using VideoDB. Every number below is a real count from the live database — no
-        projections, no targets.
-      </PageIntro>
+      <PageHeader
+        title="Overview"
+        stage="overview"
+        description="The north-star view: the cheapest path from a developer stuck on a video problem to one actively using VideoDB. Every number below is a real, current count from the live database — no projections, no targets."
+        sources={["cost_events", "outcomes", "touches", "signals", "candidates"]}
+      />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           label="Cost / activated dev"
           icon={CircleDollarSign}
+          term="cost-per-activated"
+          source="Σ cost_events ÷ outcomes"
           value={kpis.activated > 0 ? usd(kpis.total_spend / kpis.activated) : "—"}
           muted={kpis.activated === 0}
           hint={
             kpis.activated > 0
               ? `All-time spend ${usd(kpis.total_spend)} ÷ ${kpis.activated} activated. The one number this whole system optimizes.`
-              : "No activated developers yet — fills in once an attributed first API call lands. The one number this whole system optimizes."
+              : "Fills in once an attributed first API call lands. The one number this whole system optimizes."
           }
         />
         <StatCard
           label="Qualified touch → activation"
           icon={Percent}
+          term="touch-to-activation"
+          source="outcomes ÷ posted touches"
           value={kpis.posted > 0 ? pct(kpis.activated / kpis.posted) : "—"}
           muted={kpis.posted === 0}
           spark={
@@ -170,6 +178,8 @@ export default async function OverviewPage() {
         <StatCard
           label="Negative signal rate"
           icon={ShieldAlert}
+          term="negative-signal"
+          source="manual review"
           value={kpis.posted > 0 ? "0%" : "—"}
           muted={kpis.posted === 0}
           hint="Replies that got deleted, flagged, or downvoted. Tracked by manual review for now — must stay at zero."
@@ -177,20 +187,23 @@ export default async function OverviewPage() {
         <StatCard
           label="Spend today"
           icon={Wallet}
+          term="cost-event"
+          source="cost_events (since 00:00 UTC)"
           value={usd(kpis.spend_today)}
           spark={<Sparkline points={dailySpend} format={usd} />}
           hint="Every paid model and research call across providers, since midnight UTC. Bars show the last 7 days."
         />
       </div>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Funnel</h2>
-          <span className="text-xs text-muted-foreground">all time, live counts</span>
-        </header>
-        <div className="grid grid-cols-7 gap-2 px-4 py-4">
+      <SectionCard
+        title="Pipeline funnel"
+        description="How many items have reached each stage of the loop, all time. The bars shrink left-to-right by design — each stage is a filter that saves money and protects quality."
+        aside="all time · live counts"
+        bodyClassName="px-4 py-4"
+      >
+        <div className="grid grid-cols-7 gap-2">
           {FUNNEL_STAGES.map((s) => (
-            <div key={s.key} className="space-y-1.5" title={s.hint}>
+            <div key={s.key} className="space-y-1.5">
               <div className="flex h-16 items-end">
                 <div
                   className="w-full rounded-sm bg-primary/30"
@@ -204,27 +217,32 @@ export default async function OverviewPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm font-semibold tabular-nums">{funnel[s.key]}</div>
-                <div className="text-[10px] text-muted-foreground">{s.label}</div>
+                <div className="flex items-center justify-center gap-0.5">
+                  <span className="text-[10px] text-muted-foreground">{s.label}</span>
+                  <InfoTip side="bottom">{s.hint}</InfoTip>
+                </div>
               </div>
             </div>
           ))}
         </div>
-      </section>
+      </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ActivityStream />
-        <section className="rounded-lg border bg-card">
-          <header className="flex items-center justify-between border-b px-4 py-2.5">
-            <h2 className="text-sm font-medium">Errors</h2>
-            <Link href="/errors" className="text-xs text-muted-foreground hover:text-foreground">
+        <SectionCard
+          title="Recent errors"
+          description="Caught failures from agents and workflows in the last 24 hours. The system fails visibly, never silently."
+          aside={
+            <Link href="/errors" className="hover:text-foreground">
               last 24h · all →
             </Link>
-          </header>
+          }
+          bodyClassName=""
+        >
           {errors.length === 0 ? (
-            <div className="px-4 py-8 text-sm text-muted-foreground">
-              No errors in the last 24 hours — caught failures from agents and workflows land here
-              with context and a re-queue path.
-            </div>
+            <EmptyState icon={AlertTriangle} title="No errors in the last 24 hours">
+              Caught failures from agents and workflows land here with context and a re-queue path.
+            </EmptyState>
           ) : (
             <ul>
               {errors.map((e) => (
@@ -241,7 +259,7 @@ export default async function OverviewPage() {
               ))}
             </ul>
           )}
-        </section>
+        </SectionCard>
       </div>
     </div>
   );

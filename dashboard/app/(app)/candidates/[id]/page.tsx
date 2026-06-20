@@ -1,11 +1,17 @@
+import { FileEdit } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { DraftBody } from "@/components/draft-body";
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
 import { JsonModal } from "@/components/json-modal";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
+import { SectionCard } from "@/components/section-card";
 import { StatusPill } from "@/components/status-pill";
 import { query, queryOne } from "@/lib/db";
 
@@ -111,26 +117,6 @@ async function loadCost(candidateId: string) {
   );
 }
 
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-lg border bg-card">
-      <header className="flex items-center justify-between gap-3 border-b px-4 py-2.5">
-        <h2 className="text-sm font-medium">{title}</h2>
-        {hint ? <span className="text-[11px] text-muted-foreground">{hint}</span> : null}
-      </header>
-      <div className="px-4 py-3">{children}</div>
-    </section>
-  );
-}
-
 function ScoreBadge({
   label,
   value,
@@ -171,15 +157,33 @@ export default async function CandidateDetailPage({
     <div className="space-y-6">
       <RefreshOnChange tables={["candidates", "touches"]} />
 
-      <div>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <Link href="/candidates" className="hover:text-foreground hover:underline">
-            Candidates
-          </Link>
-          <span>/</span>
-          <span className="font-mono">{candidate.id.slice(0, 8)}</span>
-          <StatusPill status={candidate.status} />
-          {candidate.run_id ? (
+      <PageHeader
+        title={candidate.title}
+        stage="sense"
+        description="The full journey of one candidate — the GitHub thread it came from, how the AIs judged it, every draft reply written for it, and where it ended up. Nothing here is public unless a reviewer has approved a reply."
+        sources={["candidates", "signals", "touches", "outcomes"]}
+      >
+        <Link
+          href="/candidates"
+          className="rounded-md border bg-card px-2.5 py-1.5 text-xs hover:bg-accent"
+        >
+          ← Candidates
+        </Link>
+      </PageHeader>
+
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span className="font-mono">{candidate.id.slice(0, 8)}</span>
+        <StatusPill status={candidate.status} />
+        <span className="max-w-full truncate font-mono">{candidate.repo}</span>
+        <span className="truncate">by {candidate.author}</span>
+        <span>
+          found <RelTime iso={candidate.found_at.toISOString()} className="tabular-nums" />
+        </span>
+        <span>
+          updated <RelTime iso={candidate.updated_at.toISOString()} className="tabular-nums" />
+        </span>
+        {candidate.run_id ? (
+          <span className="inline-flex items-center gap-1">
             <Link
               href="/runs"
               className="font-mono underline-offset-2 hover:text-foreground hover:underline"
@@ -187,16 +191,9 @@ export default async function CandidateDetailPage({
             >
               run {candidate.run_id.slice(0, 8)} →
             </Link>
-          ) : null}
-        </div>
-        <h1 className="mt-1.5 font-heading text-xl font-semibold leading-snug tracking-tight">
-          {candidate.title}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          <span className="font-mono">{candidate.repo}</span> · by {candidate.author} · found{" "}
-          <RelTime iso={candidate.found_at.toISOString()} className="tabular-nums" /> · updated{" "}
-          <RelTime iso={candidate.updated_at.toISOString()} className="tabular-nums" />
-        </p>
+            <InfoTip term="run-snapshot" />
+          </span>
+        ) : null}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -211,7 +208,13 @@ export default async function CandidateDetailPage({
           hint="strong model: is VideoDB genuinely the answer?"
         />
         <div className="rounded-md border bg-background px-3 py-2">
-          <p className="text-[11px] text-muted-foreground">Capability</p>
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            Capability
+            <InfoTip>
+              The VideoDB feature this developer&apos;s problem maps to — e.g. transcription, frame
+              extraction, or scene search.
+            </InfoTip>
+          </p>
           <p className="truncate font-mono text-sm font-medium leading-7">
             {candidate.capability ?? "—"}
           </p>
@@ -220,16 +223,30 @@ export default async function CandidateDetailPage({
           className="rounded-md border bg-background px-3 py-2"
           title={`${cost?.n ?? 0} paid calls · ${cost?.tokens_in ?? 0} tokens in / ${cost?.tokens_out ?? 0} out`}
         >
-          <p className="text-[11px] text-muted-foreground">Spend on this candidate</p>
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            Spend on this candidate
+            <InfoTip>
+              Every penny spent on this one candidate — AI calls and paid web research — metered the
+              moment it was spent.
+            </InfoTip>
+          </p>
           <p className="font-heading text-lg font-semibold tabular-nums">
             ${(cost?.total_usd ?? 0).toFixed(4)}
           </p>
         </div>
       </div>
 
-      <Section title="Signal" hint="the public GitHub thread that started this — minimal data only (R7)">
-        <p className="whitespace-pre-wrap text-sm leading-relaxed">{candidate.excerpt}</p>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+      <SectionCard
+        title="Signal"
+        term="signal"
+        description="The public GitHub thread that started this. We store only the minimum needed to act — the matched excerpt, the link, the repo, and the search that found it."
+      >
+        <ScrollList maxH="max-h-72">
+          <p className="whitespace-pre-wrap break-words pr-2 text-sm leading-relaxed">
+            {candidate.excerpt}
+          </p>
+        </ScrollList>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <a
             href={candidate.url}
             target="_blank"
@@ -245,38 +262,53 @@ export default async function CandidateDetailPage({
             {candidate.signal_query}
           </span>
         </div>
-      </Section>
+      </SectionCard>
 
-      <Section title="Judgment" hint="why the agents let this through (or didn't)">
+      <SectionCard
+        title="Judgment"
+        description="In plain words, why the AIs let this thread through (or held it back). Triage is the cheap first filter; qualify is the deeper check that VideoDB genuinely fits."
+      >
         <dl className="space-y-3 text-sm">
           <div>
-            <dt className="text-xs font-medium text-muted-foreground">Triage said</dt>
+            <dt className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              Triage said
+              <InfoTip term="triage" />
+            </dt>
             <dd className="mt-0.5 leading-relaxed">{candidate.triage_reason ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-muted-foreground">Qualify reasons</dt>
+            <dt className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              Qualify reasons
+              <InfoTip term="qualify" />
+            </dt>
             <dd className="mt-0.5">
               {candidate.qualify_reasons && candidate.qualify_reasons.length > 0 ? (
-                <ul className="list-disc space-y-1 pl-5 leading-relaxed">
-                  {candidate.qualify_reasons.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
+                <ScrollList maxH="max-h-72">
+                  <ul className="list-disc space-y-1 pl-5 pr-2 leading-relaxed">
+                    {candidate.qualify_reasons.map((r, i) => (
+                      <li key={i} className="break-words">
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollList>
               ) : (
                 "—"
               )}
             </dd>
           </div>
         </dl>
-      </Section>
+      </SectionCard>
 
-      <Section
+      <SectionCard
         title="Scorer verdicts"
-        hint="pulled from the workflow run snapshot — guardrail blocks, quality advises"
+        term="guardrail"
+        description="Two automatic checks run before a human sees a draft. The guardrail is a strict pass/fail that can block; the quality score is advisory and only advises the reviewer."
+        aside="from the workflow run snapshot"
       >
         {!candidate.run_id ? (
           <p className="text-sm text-muted-foreground">
-            No touch run yet — scorers fire after craft, inside the touch workflow.
+            No touch run yet — scorers fire after the reply is crafted, inside the touch workflow.
           </p>
         ) : !scorers ? (
           <p className="text-sm text-muted-foreground">
@@ -295,11 +327,13 @@ export default async function CandidateDetailPage({
                 }`}
               />
               <div className="min-w-0">
-                <p className="text-sm font-medium">
-                  Spam guardrail{" "}
+                <p className="flex items-center gap-1 text-sm font-medium">
+                  Spam guardrail
                   <span className="text-xs font-normal text-muted-foreground">
-                    deterministic, hard gate — disclosure (R3), caps, dedup, kill-switch
+                    strict pass/fail — checks the disclosure line, daily cap, repeat contacts, and
+                    the kill-switch
                   </span>
+                  <InfoTip term="disclosure" />
                 </p>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   {scorers.guardrail
@@ -324,7 +358,7 @@ export default async function CandidateDetailPage({
                 <p className="text-sm font-medium">
                   Touch quality{" "}
                   <span className="text-xs font-normal text-muted-foreground">
-                    model judge, advisory — shown to the reviewer, never blocks
+                    an AI judge&apos;s advisory rating — shown to the reviewer, never blocks
                   </span>
                   {scorers.quality ? (
                     <span className="ml-2 tabular-nums">{scorers.quality.score.toFixed(2)}</span>
@@ -337,40 +371,45 @@ export default async function CandidateDetailPage({
             </div>
           </div>
         )}
-      </Section>
+      </SectionCard>
 
-      <Section
+      <SectionCard
         title={`Drafts & decisions${touches.length > 0 ? ` (${touches.length})` : ""}`}
-        hint="every draft written for this candidate — nothing posts without a reviewer"
+        term="draft"
+        description="Every reply written for this candidate, and what a reviewer decided about it. Nothing here goes public until a person approves it — the AI cannot post on its own."
       >
         {touches.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No draft yet — craft runs after qualify passes the fit threshold.
-          </p>
+          <EmptyState icon={FileEdit} title="No draft yet">
+            A reply is crafted only after qualify clears the fit threshold — the bar for &quot;VideoDB
+            genuinely fits.&quot;
+          </EmptyState>
         ) : (
           <ul className="space-y-4">
             {touches.map((t) => (
               <li key={t.id} className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-mono">touch/{t.id.slice(0, 8)}</span>
                   {t.template_id ? (
-                    <span
-                      className="rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400"
-                      title="snippet template (R2 — select-and-fill, never freeform code)"
-                    >
-                      {t.template_id}
+                    <span className="inline-flex max-w-full items-center gap-1 truncate rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400">
+                      <span className="truncate">{t.template_id}</span>
+                      <InfoTip term="snippet" />
                     </span>
                   ) : null}
-                  {t.variant ? <span>variant {t.variant}</span> : null}
+                  {t.variant ? (
+                    <span className="inline-flex items-center gap-1">
+                      variant {t.variant}
+                      <InfoTip term="variant" />
+                    </span>
+                  ) : null}
                   <span
-                    className={
+                    className={`inline-flex items-center gap-1 ${
                       t.disclosure_ok
                         ? "text-emerald-600 dark:text-emerald-400"
                         : "text-rose-600 dark:text-rose-400"
-                    }
-                    title="R3 — affiliation disclosure must be present verbatim"
+                    }`}
                   >
                     disclosure {t.disclosure_ok ? "present" : "MISSING"}
+                    <InfoTip term="disclosure" />
                   </span>
                   <RelTime iso={t.created_at.toISOString()} className="tabular-nums" />
                   <span className="ml-auto">
@@ -399,7 +438,8 @@ export default async function CandidateDetailPage({
                   </p>
                 ) : (
                   <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Awaiting review — approve, edit, or reject from the drafts queue.
+                    Awaiting review — a person will approve, edit, or reject this from the drafts
+                    queue.
                   </p>
                 )}
                 {t.posted_url ? (
@@ -423,7 +463,7 @@ export default async function CandidateDetailPage({
             ))}
           </ul>
         )}
-      </Section>
+      </SectionCard>
     </div>
   );
 }

@@ -1,12 +1,17 @@
+import { Inbox } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
 import { DraftBody } from "@/components/draft-body";
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
 import { JsonModal } from "@/components/json-modal";
+import { PageHeader } from "@/components/page-header";
 import { ReviewButtons } from "@/components/review-buttons";
-import { PageIntro } from "@/components/page-intro";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
+import { SectionCard } from "@/components/section-card";
 import { query, queryOne } from "@/lib/db";
 
 import { decideDraft } from "./actions";
@@ -82,48 +87,67 @@ export default async function DraftsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["touches", "candidates"]} />
-      <PageIntro title="Drafts">
-        Replies waiting for a human decision. Each one is a suspended touch-workflow run — nothing
-        posts without approval here, ever. The affiliation disclosure (R3) is highlighted in every
-        draft; the spam guardrail has already hard-checked it.
-      </PageIntro>
+      <PageHeader
+        title="Drafts"
+        stage="gate"
+        description="The human gate — the one place a reply can become public, and only if a person says so. Each card below is a finished reply, paused mid-run, waiting for you to approve, edit, or reject it. The affiliation disclosure is highlighted, and the automatic guardrail has already checked it. Nothing here is live on GitHub yet."
+        sources={["touches", "candidates", "signals", "mastra_workflow_snapshot"]}
+      >
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+          what is this?
+          <InfoTip term="human-gate" />
+        </span>
+      </PageHeader>
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span
-          className={`rounded-full border px-2.5 py-1 ${
+          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 ${
             postedToday >= cap
               ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
               : "bg-card text-muted-foreground"
           }`}
-          title="DAILY_TOUCH_CAP — the guardrail hard-fails any draft once reached"
         >
           daily cap: <span className="tabular-nums">{postedToday}/{cap}</span> posted today
+          <InfoTip>
+            How many replies have gone live today versus the maximum allowed (DAILY_TOUCH_CAP).
+            Once the cap is reached, the guardrail hard-blocks every remaining draft until tomorrow.
+          </InfoTip>
         </span>
         <span
-          className={`rounded-full border px-2.5 py-1 ${
+          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 ${
             touchesEnabled
               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
               : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
           }`}
-          title="TOUCHES_ENABLED — the act step refuses to post unless this is 'true', even after approval"
         >
           posting {touchesEnabled ? "enabled" : "disabled — approvals are recorded but nothing posts"}
+          <InfoTip term="kill-switch" />
         </span>
-        <span className="rounded-full border bg-card px-2.5 py-1 text-muted-foreground">
+        <span className="rounded-full border bg-card px-2.5 py-1 tabular-nums text-muted-foreground">
           {drafts.length} awaiting review
         </span>
       </div>
 
+      <SectionCard
+        title="Review queue"
+        term="draft"
+        description="Replies finished by the Craft agent and paused at the human gate. Read the original thread, check the highlighted disclosure line and the guardrail scores, edit if needed, then approve or reject. Your decision resumes the paused run."
+        aside={<span className="tabular-nums">{drafts.length} pending</span>}
+        bodyClassName="p-0"
+      >
       {drafts.length === 0 ? (
-        <div className="rounded-lg border bg-card px-4 py-8 text-sm text-muted-foreground">
-          Nothing to review. Drafts land here when a touch run reaches the human gate — run the
-          dispatcher (<code>pnpm --filter agent dispatch</code>) with queued candidates to produce
-          one.
+        <div className="p-4">
+          <EmptyState icon={Inbox} title="No replies waiting">
+            Drafts that pass the spam guardrail appear here for approval. When a touch run reaches
+            the human gate it pauses and lands in this queue — nothing about it is public until you
+            approve it.
+          </EmptyState>
         </div>
       ) : (
-        <ul className="space-y-4">
+        <ScrollList maxH="max-h-[calc(100vh-15rem)]">
+        <ul className="space-y-4 p-4">
           {drafts.map((d) => (
-            <li key={d.touch_id} className="space-y-3 rounded-lg border bg-card p-4">
+            <li key={d.touch_id} className="surface space-y-3 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <a
@@ -134,14 +158,15 @@ export default async function DraftsPage() {
                   >
                     {d.title}
                   </a>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                    <span className="font-mono">{d.repo}</span>
-                    <span>by {d.author}</span>
-                    <span title="qualify fit — is VideoDB genuinely the answer?">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="break-all font-mono">{d.repo}</span>
+                    <span className="break-words">by {d.author}</span>
+                    <span className="inline-flex items-center gap-0.5">
                       fit{" "}
                       <span className="tabular-nums">
                         {d.fit_score === null ? "—" : d.fit_score.toFixed(2)}
                       </span>
+                      <InfoTip term="fit-score" />
                     </span>
                     {d.capability ? (
                       <span className="rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400">
@@ -166,42 +191,45 @@ export default async function DraftsPage() {
                     </Link>
                   </div>
                 </div>
-                <JsonModal title={`touches/${d.touch_id.slice(0, 8)}`} data={d} />
+                <span className="shrink-0">
+                  <JsonModal title={`touches/${d.touch_id.slice(0, 8)}`} data={d} />
+                </span>
               </div>
 
               <details>
                 <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
                   Original thread excerpt
                 </summary>
-                <p className="mt-1.5 whitespace-pre-wrap border-l-2 pl-3 text-xs leading-relaxed text-muted-foreground">
-                  {d.excerpt}
-                </p>
+                <ScrollList maxH="max-h-64" className="mt-1.5">
+                  <p className="whitespace-pre-wrap break-words border-l-2 pl-3 pr-2 text-xs leading-relaxed text-muted-foreground">
+                    {d.excerpt}
+                  </p>
+                </ScrollList>
               </details>
 
-              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span
-                  className={
+                  className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${
                     d.guardrail?.score === 1
-                      ? "rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600 dark:text-emerald-400"
-                      : "rounded bg-rose-500/10 px-1.5 py-0.5 text-rose-600 dark:text-rose-400"
-                  }
-                  title={
-                    d.guardrail?.score === 1
-                      ? "deterministic hard gate passed: disclosure, caps, dedup, kill-switch, links"
-                      : (d.guardrail?.reason ?? "guardrail result missing")
-                  }
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                  }`}
                 >
                   guardrail {d.guardrail?.score === 1 ? "passed" : "FAILED"}
+                  {d.guardrail?.score === 1 ? (
+                    <InfoTip term="guardrail" />
+                  ) : (
+                    <InfoTip>{d.guardrail?.reason ?? "Guardrail result missing."}</InfoTip>
+                  )}
                 </span>
                 <span
-                  className={`rounded px-1.5 py-0.5 ${
+                  className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${
                     d.quality
                       ? d.quality.score >= 0.7
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                         : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                       : "bg-muted text-muted-foreground"
                   }`}
-                  title={d.quality?.reason ?? "advisory model judge — unavailable for this draft"}
                 >
                   quality{" "}
                   {d.quality ? (
@@ -209,16 +237,20 @@ export default async function DraftsPage() {
                   ) : (
                     "n/a"
                   )}
+                  <InfoTip>
+                    {d.quality?.reason ??
+                      "An advisory AI judge of how genuinely helpful the reply reads. Guidance only — it never blocks a draft on its own."}
+                  </InfoTip>
                 </span>
                 <span
-                  className={
+                  className={`inline-flex items-center gap-1 ${
                     d.disclosure_ok
                       ? "text-emerald-600 dark:text-emerald-400"
                       : "text-rose-600 dark:text-rose-400"
-                  }
-                  title="R3 — affiliation disclosure must be present verbatim"
+                  }`}
                 >
                   disclosure {d.disclosure_ok ? "present" : "MISSING"}
+                  <InfoTip term="disclosure" />
                 </span>
               </div>
 
@@ -268,7 +300,9 @@ export default async function DraftsPage() {
             </li>
           ))}
         </ul>
+        </ScrollList>
       )}
+      </SectionCard>
     </div>
   );
 }

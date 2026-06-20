@@ -1,11 +1,16 @@
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
 import { JsonModal } from "@/components/json-modal";
-import { PageIntro } from "@/components/page-intro";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
 import { RequeueButton } from "@/components/requeue-button";
+import { ScrollList } from "@/components/scroll-list";
+import { SectionCard } from "@/components/section-card";
 import { StatusPill } from "@/components/status-pill";
 import { query } from "@/lib/db";
 
@@ -55,80 +60,108 @@ export default async function ErrorsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["errors", "candidates"]} />
-      <PageIntro title="Errors">
-        Every caught failure from the agent — searches, triage, craft, scorers, posting — lands
-        here with its stack and context. Failures never post anything; a failed candidate can be
-        re-queued, which sends it through every gate (guardrail, human review) again.
-      </PageIntro>
+      <PageHeader
+        title="Errors"
+        stage="ops"
+        description="The system fails visibly, never silently. Every caught failure — a search, triage, craft, a scorer, or posting — lands here with its full context. Nothing is posted as a result of a failure, and a failed candidate can be re-queued, which sends it back through every gate (guardrail, human review) again."
+        sources={["errors", "candidates", "signals"]}
+      />
 
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        {sources.length === 0 ? (
-          <span className="rounded-full border bg-card px-2.5 py-1 text-muted-foreground">
-            no errors recorded
+      <SectionCard
+        title="Errors by source"
+        description="A tally of where failures came from. 'Source' names the step or component that threw — for example a workflow step, the dispatcher, or a scorer."
+        aside={
+          <span className="inline-flex items-center gap-1">
+            all time <InfoTip side="bottom">The system component or workflow step that raised the error — e.g. github-search, triage, craft, a scorer, or the dispatcher. It tells you where to look first.</InfoTip>
           </span>
-        ) : (
-          sources.map((s) => (
-            <span key={s.source} className="rounded-full border bg-card px-2.5 py-1">
-              <span className="font-mono text-rose-600 dark:text-rose-400">{s.source}</span>{" "}
-              <span className="tabular-nums text-muted-foreground">×{s.n}</span>
+        }
+        bodyClassName="px-4 py-3"
+      >
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {sources.length === 0 ? (
+            <span className="rounded-full border bg-card px-2.5 py-1 text-muted-foreground">
+              no errors recorded
             </span>
-          ))
-        )}
-      </div>
-
-      {errors.length === 0 ? (
-        <div className="rounded-lg border bg-card px-4 py-8 text-sm text-muted-foreground">
-          Nothing has failed yet. Errors appear here the moment a workflow step, the dispatcher, or
-          a scorer throws — with stack, context, and a re-queue path for failed candidates.
+          ) : (
+            sources.map((s) => (
+              <span key={s.source} className="rounded-full border bg-card px-2.5 py-1">
+                <span className="font-mono text-rose-600 dark:text-rose-400">{s.source}</span>{" "}
+                <span className="tabular-nums text-muted-foreground">×{s.n}</span>
+              </span>
+            ))
+          )}
         </div>
-      ) : (
-        <ul className="space-y-3">
-          {errors.map((e) => (
-            <li key={e.id} className="space-y-2 rounded-lg border bg-card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                    <span className="rounded bg-rose-500/10 px-1.5 py-0.5 font-mono text-rose-600 dark:text-rose-400">
-                      {e.source}
-                    </span>
-                    <RelTime iso={e.at.toISOString()} className="tabular-nums text-muted-foreground" />
+      </SectionCard>
+
+      <SectionCard
+        title="Recent failures"
+        description="The 100 most recent caught failures, newest first. Each keeps its message, stack, and context, and links back to the candidate it belongs to. Failed candidates carry a re-queue button."
+        aside="latest 100"
+        bodyClassName="p-0"
+      >
+        {errors.length === 0 ? (
+          <div className="p-4">
+            <EmptyState icon={ShieldCheck} title="Nothing has failed yet">
+              Errors appear here the moment a workflow step, the dispatcher, or a scorer throws —
+              with stack, context, and a re-queue path for failed candidates.
+            </EmptyState>
+          </div>
+        ) : (
+          <ScrollList maxH="max-h-[36rem]">
+            <ul className="space-y-3 p-4">
+              {errors.map((e) => (
+                <li key={e.id} className="surface space-y-2 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="rounded bg-rose-500/10 px-1.5 py-0.5 font-mono text-rose-600 dark:text-rose-400">
+                          {e.source}
+                        </span>
+                        <RelTime
+                          iso={e.at.toISOString()}
+                          className="tabular-nums text-muted-foreground"
+                        />
+                      </div>
+                      <p className="break-words text-sm leading-snug">{e.message}</p>
+                    </div>
+                    <div className="shrink-0">
+                      <JsonModal title={`errors/${e.id.slice(0, 8)}`} data={e} />
+                    </div>
                   </div>
-                  <p className="break-words text-sm leading-snug">{e.message}</p>
-                </div>
-                <JsonModal title={`errors/${e.id.slice(0, 8)}`} data={e} />
-              </div>
 
-              {e.candidate_id ? (
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                  <Link
-                    href={`/candidates/${e.candidate_id}`}
-                    className="font-mono underline-offset-2 hover:text-foreground hover:underline"
-                  >
-                    candidate {e.candidate_id.slice(0, 8)}
-                  </Link>
-                  {e.title ? <span className="truncate">{e.title}</span> : null}
-                  {e.repo ? <span className="font-mono">{e.repo}</span> : null}
-                  {e.candidate_status ? <StatusPill status={e.candidate_status} /> : null}
-                  {e.candidate_status === "failed" ? (
-                    <RequeueButton candidateId={e.candidate_id} />
+                  {e.candidate_id ? (
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Link
+                        href={`/candidates/${e.candidate_id}`}
+                        className="shrink-0 font-mono underline-offset-2 hover:text-foreground hover:underline"
+                      >
+                        candidate {e.candidate_id.slice(0, 8)}
+                      </Link>
+                      {e.title ? <span className="min-w-0 truncate">{e.title}</span> : null}
+                      {e.repo ? <span className="shrink-0 font-mono">{e.repo}</span> : null}
+                      {e.candidate_status ? <StatusPill status={e.candidate_status} /> : null}
+                      {e.candidate_status === "failed" ? (
+                        <RequeueButton candidateId={e.candidate_id} />
+                      ) : null}
+                    </div>
                   ) : null}
-                </div>
-              ) : null}
 
-              {e.stack ? (
-                <details>
-                  <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                    Stack trace
-                  </summary>
-                  <pre className="mt-1.5 max-h-64 overflow-auto rounded-md border bg-background p-2 text-[11px] leading-relaxed">
-                    {e.stack}
-                  </pre>
-                </details>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
+                  {e.stack ? (
+                    <details>
+                      <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                        Stack trace
+                      </summary>
+                      <pre className="mt-1.5 max-h-64 overflow-auto rounded-md border bg-background p-2 text-xs leading-relaxed">
+                        {e.stack}
+                      </pre>
+                    </details>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </ScrollList>
+        )}
+      </SectionCard>
     </div>
   );
 }
