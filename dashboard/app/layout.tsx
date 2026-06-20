@@ -1,21 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 
-// Body / UI — friendly, modern, highly legible.
-const sans = Plus_Jakarta_Sans({
+// Body / UI — warm humanist grotesque, distinctive but highly legible.
+const sans = Hanken_Grotesk({
   variable: "--font-sans-face",
   subsets: ["latin"],
   display: "swap",
 });
 
-// Headings / display — geometric with character.
-const display = Space_Grotesk({
+// Headings / display — characterful, slightly quirky grotesque with optical sizing.
+const display = Bricolage_Grotesque({
   variable: "--font-display-face",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 

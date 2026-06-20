@@ -25,14 +25,14 @@ export function PageHeader({
 }) {
   return (
     <header className="space-y-2.5 border-b pb-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="heading-gradient text-[1.9rem] font-extrabold leading-none">{title}</h1>
           {stage ? <LoopStageChip stage={stage} /> : null}
         </div>
         {children ? <div className="flex items-center gap-2">{children}</div> : null}
       </div>
-      <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+      <p className="max-w-3xl text-[0.95rem] leading-relaxed text-muted-foreground">{description}</p>
       {sources && sources.length > 0 ? (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
           <span className="text-[11px] text-muted-foreground/70">data from</span>

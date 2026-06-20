@@ -21,7 +21,7 @@ export function ScrollList({
   return (
     <ScrollArea.Root className={`relative ${className}`}>
       <ScrollArea.Viewport
-        className={`${maxH} w-full overscroll-contain rounded-[inherit] focus-visible:outline-none`}
+        className={`${maxH} w-full rounded-[inherit] focus-visible:outline-none`}
       >
         {children}
       </ScrollArea.Viewport>
