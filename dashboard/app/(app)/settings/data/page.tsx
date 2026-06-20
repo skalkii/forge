@@ -8,6 +8,7 @@ import { InfoTip } from "@/components/info-tip";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { query, queryOne } from "@/lib/db";
 
@@ -89,7 +90,7 @@ export default async function DataSettingsPage() {
             <InfoTip term="retention" />
           </p>
           <p className="mt-1 text-lg font-semibold tabular-nums">{days} days</p>
-          <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/80">
             Set by SIGNAL_RETENTION_DAYS — raw unqualified signals older than this are deleted by
             the purge job.
           </p>
@@ -97,7 +98,7 @@ export default async function DataSettingsPage() {
         <section className="surface px-4 py-3">
           <p className="text-xs text-muted-foreground">Purgeable now</p>
           <p className="mt-1 text-lg font-semibold tabular-nums">{stats.purgeable}</p>
-          <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/80">
             Signals past the horizon with no candidate — the next{" "}
             <code className="font-mono">pnpm purge</code> run deletes exactly these.
           </p>
@@ -105,7 +106,7 @@ export default async function DataSettingsPage() {
         <section className="surface px-4 py-3">
           <p className="text-xs text-muted-foreground">Signals stored</p>
           <p className="mt-1 text-lg font-semibold tabular-nums">{stats.total_signals}</p>
-          <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/80">
             {stats.oldest ? (
               <>
                 oldest <RelTime iso={stats.oldest.toISOString()} />
@@ -118,7 +119,7 @@ export default async function DataSettingsPage() {
         <section className="surface px-4 py-3">
           <p className="text-xs text-muted-foreground">Distinct authors</p>
           <p className="mt-1 text-lg font-semibold tabular-nums">{stats.authors}</p>
-          <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/80">
             Public usernames only — the full extent of personal data held.
           </p>
         </section>
@@ -169,42 +170,46 @@ export default async function DataSettingsPage() {
         title="Deletion log"
         description="Proof the privacy promises are kept: every automatic purge run and every forget-user request, pulled straight from the audit log."
         aside="purges + forget-user, last 10"
-        bodyClassName=""
+        bodyClassName="p-0"
       >
         {log.length === 0 ? (
           <EmptyState icon={Trash2} title="No deletions yet">
             Purge runs and forget-user actions are recorded here from the audit log as they happen.
           </EmptyState>
         ) : (
-          <ul>
-            {log.map((e) => (
-              <li
-                key={e.id}
-                className="flex flex-wrap items-center gap-2 border-b px-4 py-2 text-xs last:border-b-0"
-              >
-                <span
-                  className={`rounded px-1.5 py-0.5 font-mono text-[11px] ${
-                    e.action === "user.forgotten"
-                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                      : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                  }`}
+          <ScrollList maxH="max-h-[30rem]">
+            <ul>
+              {log.map((e) => (
+                <li
+                  key={e.id}
+                  className="flex flex-wrap items-center gap-2 border-b px-4 py-2 text-xs last:border-b-0"
                 >
-                  {e.action}
-                </span>
-                {e.subject_id && <span className="font-mono">{e.subject_id}</span>}
-                <span className="text-muted-foreground">
-                  {e.action === "signals.purged"
-                    ? `${(e.detail?.purged as number) ?? "?"} signal(s) past ${(e.detail?.retentionDays as number) ?? "?"}d`
-                    : `${(e.detail?.signals as number) ?? 0} signals, ${(e.detail?.candidates as number) ?? 0} candidates, ${(e.detail?.touches as number) ?? 0} touches`}
-                </span>
-                <span className="text-muted-foreground">by {e.actor}</span>
-                <RelTime
-                  iso={e.at.toISOString()}
-                  className="ml-auto tabular-nums text-muted-foreground"
-                />
-              </li>
-            ))}
-          </ul>
+                  <span
+                    className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-xs ${
+                      e.action === "user.forgotten"
+                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                        : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                    }`}
+                  >
+                    {e.action}
+                  </span>
+                  {e.subject_id && (
+                    <span className="min-w-0 max-w-[12rem] truncate font-mono">{e.subject_id}</span>
+                  )}
+                  <span className="min-w-0 text-muted-foreground">
+                    {e.action === "signals.purged"
+                      ? `${(e.detail?.purged as number) ?? "?"} signal(s) past ${(e.detail?.retentionDays as number) ?? "?"}d`
+                      : `${(e.detail?.signals as number) ?? 0} signals, ${(e.detail?.candidates as number) ?? 0} candidates, ${(e.detail?.touches as number) ?? 0} touches`}
+                  </span>
+                  <span className="shrink-0 text-muted-foreground">by {e.actor}</span>
+                  <RelTime
+                    iso={e.at.toISOString()}
+                    className="ml-auto shrink-0 tabular-nums text-muted-foreground"
+                  />
+                </li>
+              ))}
+            </ul>
+          </ScrollList>
         )}
       </SectionCard>
     </div>

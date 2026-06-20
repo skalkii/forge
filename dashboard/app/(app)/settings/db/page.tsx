@@ -7,6 +7,7 @@ import { InfoTip } from "@/components/info-tip";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
@@ -74,43 +75,47 @@ export default async function DbSettingsPage() {
         title="Tables"
         description="Every table in the database, with its column count, an approximate live row count, and whether it has a NOTIFY trigger that tells this dashboard to refresh the moment its data changes."
         aside="public schema"
-        bodyClassName=""
+        bodyClassName="p-0"
       >
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-left text-xs text-muted-foreground">
-              <th className="px-4 py-2 font-medium">Table</th>
-              <th className="px-4 py-2 text-right font-medium">Columns</th>
-              <th className="px-4 py-2 text-right font-medium">Rows</th>
-              <th className="px-4 py-2 text-right font-medium">
-                <span className="inline-flex items-center gap-1">
-                  NOTIFY
-                  <InfoTip>
-                    A green dot means this table has a trigger that pings the dashboard the instant
-                    its rows change, so the view updates live without a manual refresh.
-                  </InfoTip>
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {tables.map((t) => (
-              <tr key={t.table_name} className="border-b last:border-b-0">
-                <td className="px-4 py-2 font-mono text-xs">{t.table_name}</td>
-                <td className="px-4 py-2 text-right tabular-nums">{t.column_count}</td>
-                <td className="px-4 py-2 text-right tabular-nums">{t.row_count}</td>
-                <td className="px-4 py-2 text-right">
-                  <span
-                    className={`inline-block size-1.5 rounded-full ${
-                      t.has_notify ? "bg-emerald-500" : "bg-muted-foreground/40"
-                    }`}
-                    title={t.has_notify ? "forge_notify trigger attached" : "no trigger"}
-                  />
-                </td>
+        <ScrollList maxH="max-h-[30rem]">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-card">
+              <tr className="border-b text-left text-xs text-muted-foreground">
+                <th className="px-4 py-2 font-medium">Table</th>
+                <th className="px-4 py-2 text-right font-medium">Columns</th>
+                <th className="px-4 py-2 text-right font-medium">Rows</th>
+                <th className="px-4 py-2 text-right font-medium">
+                  <span className="inline-flex items-center gap-1">
+                    NOTIFY
+                    <InfoTip>
+                      A green dot means this table has a trigger that pings the dashboard the instant
+                      its rows change, so the view updates live without a manual refresh.
+                    </InfoTip>
+                  </span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tables.map((t) => (
+                <tr key={t.table_name} className="border-b last:border-b-0">
+                  <td className="px-4 py-2 font-mono text-xs">
+                    <span className="block min-w-0 truncate">{t.table_name}</span>
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">{t.column_count}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{t.row_count}</td>
+                  <td className="px-4 py-2 text-right">
+                    <span
+                      className={`inline-block size-1.5 rounded-full ${
+                        t.has_notify ? "bg-emerald-500" : "bg-muted-foreground/40"
+                      }`}
+                      title={t.has_notify ? "forge_notify trigger attached" : "no trigger"}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ScrollList>
       </SectionCard>
 
       <SectionCard
@@ -125,41 +130,45 @@ export default async function DbSettingsPage() {
             </InfoTip>
           </span>
         }
-        bodyClassName=""
+        bodyClassName="p-0"
       >
         {audit.length === 0 ? (
           <EmptyState icon={ScrollText} title="No audit entries yet">
             Reviewer decisions, kill-switch flips, and deletions are recorded here as they happen.
           </EmptyState>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-4 py-2 font-medium">At</th>
-                <th className="px-4 py-2 font-medium">Actor</th>
-                <th className="px-4 py-2 font-medium">Action</th>
-                <th className="px-4 py-2 font-medium">Subject</th>
-                <th className="px-4 py-2 font-medium">Detail</th>
-              </tr>
-            </thead>
-            <tbody>
-              {audit.map((row) => (
-                <tr key={row.id} className="border-b align-top last:border-b-0">
-                  <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
-                    <RelTime iso={row.at.toISOString()} />
-                  </td>
-                  <td className="px-4 py-2">{row.actor}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{row.action}</td>
-                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
-                    {row.subject_table ? `${row.subject_table}/${row.subject_id ?? "—"}` : "—"}
-                  </td>
-                  <td className="max-w-64 truncate px-4 py-2 font-mono text-[11px] text-muted-foreground">
-                    {row.detail ? JSON.stringify(row.detail) : "—"}
-                  </td>
+          <ScrollList maxH="max-h-[30rem]">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-card">
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">At</th>
+                  <th className="px-4 py-2 font-medium">Actor</th>
+                  <th className="px-4 py-2 font-medium">Action</th>
+                  <th className="px-4 py-2 font-medium">Subject</th>
+                  <th className="px-4 py-2 font-medium">Detail</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {audit.map((row) => (
+                  <tr key={row.id} className="border-b align-top last:border-b-0">
+                    <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
+                      <RelTime iso={row.at.toISOString()} />
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className="block min-w-0 truncate">{row.actor}</span>
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs">{row.action}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
+                      {row.subject_table ? `${row.subject_table}/${row.subject_id ?? "—"}` : "—"}
+                    </td>
+                    <td className="max-w-64 truncate px-4 py-2 font-mono text-xs text-muted-foreground">
+                      {row.detail ? JSON.stringify(row.detail) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollList>
         )}
       </SectionCard>
     </div>

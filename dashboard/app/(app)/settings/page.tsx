@@ -78,10 +78,10 @@ export default function SettingsPage() {
         bodyClassName="grid gap-4 p-4 lg:grid-cols-2"
       >
         {models.map((m) => (
-          <section key={m.tier} className="rounded-lg border bg-card">
-            <header className="flex items-center justify-between border-b px-4 py-2.5">
-              <h2 className="text-sm font-medium">{TIER_LABEL[m.tier]}</h2>
-              <code className="text-xs text-muted-foreground">{m.envVar}</code>
+          <section key={m.tier} className="surface">
+            <header className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
+              <h2 className="min-w-0 truncate text-sm font-medium">{TIER_LABEL[m.tier]}</h2>
+              <code className="shrink-0 text-xs text-muted-foreground">{m.envVar}</code>
             </header>
             <div className="space-y-3 px-4 py-4">
               {m.error ? (
@@ -90,12 +90,14 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <>
-                  <div className="text-lg font-semibold tabular-nums">{m.routerId}</div>
+                  <div className="break-words text-lg font-semibold tabular-nums">
+                    {m.routerId}
+                  </div>
                   <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                     <dt className="text-muted-foreground">Provider</dt>
-                    <dd>{m.provider}</dd>
+                    <dd className="min-w-0 truncate">{m.provider}</dd>
                     <dt className="text-muted-foreground">Model</dt>
-                    <dd className="truncate" title={m.modelId ?? undefined}>
+                    <dd className="min-w-0 truncate" title={m.modelId ?? undefined}>
                       {m.modelId}
                     </dd>
                     <dt className="text-muted-foreground">Credential</dt>
@@ -120,7 +122,7 @@ export default function SettingsPage() {
                   {m.provider ? <PingButton provider={m.provider} /> : null}
                 </>
               )}
-              <p className="text-[11px] text-muted-foreground/70">{TIER_HINT[m.tier]}</p>
+              <p className="text-xs text-muted-foreground/70">{TIER_HINT[m.tier]}</p>
             </div>
           </section>
         ))}
@@ -130,13 +132,15 @@ export default function SettingsPage() {
         title="Provider credentials"
         description="A quick presence check across every provider the model router can reach. Green means an API key is set in the environment; the actual values are never read or shown. Use Ping to confirm the key actually works."
         aside="presence only — values never shown"
-        bodyClassName=""
+        bodyClassName="p-0"
       >
         <table className="w-full text-sm">
           <tbody>
             {credentials.map((c) => (
               <tr key={c.provider} className="border-b last:border-b-0">
-                <td className="px-4 py-2 font-medium">{c.provider}</td>
+                <td className="px-4 py-2 font-medium">
+                  <span className="block min-w-0 truncate">{c.provider}</span>
+                </td>
                 <td className="px-4 py-2">
                   <code className="text-xs text-muted-foreground">{c.envVar}</code>
                 </td>

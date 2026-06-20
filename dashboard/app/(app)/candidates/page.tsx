@@ -8,6 +8,7 @@ import { JsonModal } from "@/components/json-modal";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { StatusPill, CANDIDATE_STATUSES } from "@/components/status-pill";
 import { query } from "@/lib/db";
@@ -123,20 +124,23 @@ export default async function CandidatesPage({
         term="candidate"
         description="One row per candidate, most recently updated first. The two scores show how the AIs rated it; click a title to open its full journey."
         aside={`${candidates.length} shown · most recently updated first`}
-        bodyClassName=""
+        bodyClassName="p-0"
       >
         {candidates.length === 0 ? (
-          <EmptyState
-            icon={Compass}
-            title={`No candidates${active ? ` at the '${active}' stage` : " yet"}`}
-          >
-            Discovery enqueues a candidate whenever a signal scores above the triage threshold —
-            the cheap AI&apos;s bar for &quot;real pain worth pursuing.&quot;
-          </EmptyState>
+          <div className="p-4">
+            <EmptyState
+              icon={Compass}
+              title={`No candidates${active ? ` at the '${active}' stage` : " yet"}`}
+            >
+              Discovery enqueues a candidate whenever a signal scores above the triage threshold —
+              the cheap AI&apos;s bar for &quot;real pain worth pursuing.&quot;
+            </EmptyState>
+          </div>
         ) : (
-          <ul>
-            {candidates.map((c) => (
-              <li key={c.id} className="border-b px-4 py-3 last:border-b-0">
+          <ScrollList maxH="max-h-[34rem]">
+            <ul>
+              {candidates.map((c) => (
+                <li key={c.id} className="border-b px-4 py-3 last:border-b-0">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <Link
@@ -145,10 +149,10 @@ export default async function CandidatesPage({
                     >
                       {c.title}
                     </Link>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <StatusPill status={c.status} />
-                      <span className="font-mono">{c.repo}</span>
-                      <span>by {c.author}</span>
+                      <span className="max-w-full truncate font-mono">{c.repo}</span>
+                      <span className="truncate">by {c.author}</span>
                       <span className="inline-flex items-center gap-1">
                         triage <Score value={c.triage_score} />
                         <InfoTip term="triage" />
@@ -159,22 +163,23 @@ export default async function CandidatesPage({
                       </span>
                       {c.capability ? (
                         <span
-                          className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400"
+                          className="inline-flex max-w-full items-center gap-1 truncate rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400"
                           title="the VideoDB capability this thread maps to (e.g. transcription, scene search)"
                         >
                           {c.capability}
                         </span>
                       ) : null}
-                      <RelTime iso={c.updated_at.toISOString()} className="tabular-nums" />
+                      <RelTime iso={c.updated_at.toISOString()} className="shrink-0 tabular-nums" />
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <JsonModal title={`candidates/${c.id.slice(0, 8)}`} data={c} />
                   </div>
                 </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </ScrollList>
         )}
       </SectionCard>
     </div>

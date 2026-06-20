@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
 import { RequeueButton } from "@/components/requeue-button";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { StatusPill } from "@/components/status-pill";
 import { query } from "@/lib/db";
@@ -96,61 +97,70 @@ export default async function ErrorsPage() {
         title="Recent failures"
         description="The 100 most recent caught failures, newest first. Each keeps its message, stack, and context, and links back to the candidate it belongs to. Failed candidates carry a re-queue button."
         aside="latest 100"
-        bodyClassName="p-4"
+        bodyClassName="p-0"
       >
         {errors.length === 0 ? (
-          <EmptyState icon={ShieldCheck} title="Nothing has failed yet">
-            Errors appear here the moment a workflow step, the dispatcher, or a scorer throws —
-            with stack, context, and a re-queue path for failed candidates.
-          </EmptyState>
+          <div className="p-4">
+            <EmptyState icon={ShieldCheck} title="Nothing has failed yet">
+              Errors appear here the moment a workflow step, the dispatcher, or a scorer throws —
+              with stack, context, and a re-queue path for failed candidates.
+            </EmptyState>
+          </div>
         ) : (
-          <ul className="space-y-3">
-          {errors.map((e) => (
-            <li key={e.id} className="space-y-2 rounded-lg border bg-card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                    <span className="rounded bg-rose-500/10 px-1.5 py-0.5 font-mono text-rose-600 dark:text-rose-400">
-                      {e.source}
-                    </span>
-                    <RelTime iso={e.at.toISOString()} className="tabular-nums text-muted-foreground" />
+          <ScrollList maxH="max-h-[36rem]">
+            <ul className="space-y-3 p-4">
+              {errors.map((e) => (
+                <li key={e.id} className="surface space-y-2 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="rounded bg-rose-500/10 px-1.5 py-0.5 font-mono text-rose-600 dark:text-rose-400">
+                          {e.source}
+                        </span>
+                        <RelTime
+                          iso={e.at.toISOString()}
+                          className="tabular-nums text-muted-foreground"
+                        />
+                      </div>
+                      <p className="break-words text-sm leading-snug">{e.message}</p>
+                    </div>
+                    <div className="shrink-0">
+                      <JsonModal title={`errors/${e.id.slice(0, 8)}`} data={e} />
+                    </div>
                   </div>
-                  <p className="break-words text-sm leading-snug">{e.message}</p>
-                </div>
-                <JsonModal title={`errors/${e.id.slice(0, 8)}`} data={e} />
-              </div>
 
-              {e.candidate_id ? (
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                  <Link
-                    href={`/candidates/${e.candidate_id}`}
-                    className="font-mono underline-offset-2 hover:text-foreground hover:underline"
-                  >
-                    candidate {e.candidate_id.slice(0, 8)}
-                  </Link>
-                  {e.title ? <span className="truncate">{e.title}</span> : null}
-                  {e.repo ? <span className="font-mono">{e.repo}</span> : null}
-                  {e.candidate_status ? <StatusPill status={e.candidate_status} /> : null}
-                  {e.candidate_status === "failed" ? (
-                    <RequeueButton candidateId={e.candidate_id} />
+                  {e.candidate_id ? (
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Link
+                        href={`/candidates/${e.candidate_id}`}
+                        className="shrink-0 font-mono underline-offset-2 hover:text-foreground hover:underline"
+                      >
+                        candidate {e.candidate_id.slice(0, 8)}
+                      </Link>
+                      {e.title ? <span className="min-w-0 truncate">{e.title}</span> : null}
+                      {e.repo ? <span className="shrink-0 font-mono">{e.repo}</span> : null}
+                      {e.candidate_status ? <StatusPill status={e.candidate_status} /> : null}
+                      {e.candidate_status === "failed" ? (
+                        <RequeueButton candidateId={e.candidate_id} />
+                      ) : null}
+                    </div>
                   ) : null}
-                </div>
-              ) : null}
 
-              {e.stack ? (
-                <details>
-                  <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                    Stack trace
-                  </summary>
-                  <pre className="mt-1.5 max-h-64 overflow-auto rounded-md border bg-background p-2 text-[11px] leading-relaxed">
-                    {e.stack}
-                  </pre>
-                </details>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
+                  {e.stack ? (
+                    <details>
+                      <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                        Stack trace
+                      </summary>
+                      <pre className="mt-1.5 max-h-64 overflow-auto rounded-md border bg-background p-2 text-xs leading-relaxed">
+                        {e.stack}
+                      </pre>
+                    </details>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </ScrollList>
+        )}
       </SectionCard>
     </div>
   );

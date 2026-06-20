@@ -6,6 +6,7 @@ import { InfoTip } from "@/components/info-tip";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
@@ -90,7 +91,7 @@ function VariantFunnel({ row }: { row: z.infer<typeof VariantRow> }) {
         <span className="rounded bg-violet-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-violet-600 dark:text-violet-400">
           Variant {row.variant ?? "?"}
         </span>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {row.posted > 0
             ? `${row.activated} of ${row.posted} posted activated`
             : "nothing posted yet"}
@@ -207,6 +208,14 @@ export default async function ExperimentsPage() {
                     ? "No replies drafted under this experiment yet — arms appear as the craft step assigns them."
                     : "Not running — no replies will be assigned to this experiment until its status flips to running."}
                 </p>
+              ) : arms.length > 4 ? (
+                <ScrollList maxH="max-h-[32rem]" className="-mx-1">
+                  <div className="grid gap-3 px-1 sm:grid-cols-2">
+                    {arms.map((v) => (
+                      <VariantFunnel key={`${v.experiment_id}-${v.variant}`} row={v} />
+                    ))}
+                  </div>
+                </ScrollList>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {arms.map((v) => (

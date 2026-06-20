@@ -8,6 +8,7 @@ import { JsonModal } from "@/components/json-modal";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { query } from "@/lib/db";
@@ -250,32 +251,36 @@ export default async function CostsPage() {
               top 20 <InfoTip term="retrieval" />
             </span>
           }
-          bodyClassName=""
+          bodyClassName="p-0"
         >
           {candidateSpend.length === 0 ? (
-            <EmptyState title="No per-candidate spend yet">
-              Money is only spent after triage passes (enrich, qualify, craft). Once a candidate
-              reaches those steps, its running cost shows up here.
-            </EmptyState>
+            <div className="p-4">
+              <EmptyState title="No per-candidate spend yet">
+                Money is only spent after triage passes (enrich, qualify, craft). Once a candidate
+                reaches those steps, its running cost shows up here.
+              </EmptyState>
+            </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-2 font-medium">Candidate</th>
-                  <th className="px-4 py-2 text-right font-medium">Calls</th>
-                  <th className="px-4 py-2 text-right font-medium">Spend</th>
-                </tr>
-              </thead>
-              <tbody>
-                {candidateSpend.map((c) => (
-                  <tr key={c.candidate_id} className="border-b last:border-b-0">
-                    <td className="px-4 py-2 font-mono text-xs">{c.candidate_id.slice(0, 8)}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{c.calls}</td>
-                    <td className="px-4 py-2 text-right font-mono tabular-nums">{usd(c.spend)}</td>
+            <ScrollList maxH="max-h-[26rem]">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 z-10 bg-card">
+                  <tr className="border-b text-left text-xs text-muted-foreground">
+                    <th className="px-4 py-2 font-medium">Candidate</th>
+                    <th className="px-4 py-2 text-right font-medium">Calls</th>
+                    <th className="px-4 py-2 text-right font-medium">Spend</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {candidateSpend.map((c) => (
+                    <tr key={c.candidate_id} className="border-b last:border-b-0">
+                      <td className="px-4 py-2 font-mono text-xs">{c.candidate_id.slice(0, 8)}</td>
+                      <td className="px-4 py-2 text-right tabular-nums">{c.calls}</td>
+                      <td className="px-4 py-2 text-right font-mono tabular-nums">{usd(c.spend)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ScrollList>
           )}
         </SectionCard>
 
@@ -284,44 +289,48 @@ export default async function CostsPage() {
           term="cost-event"
           description="The raw spend log — one row per paid call, newest first. Each row shows the provider, what kind of call it was, token counts, and the exact cost."
           aside="last 50"
-          bodyClassName=""
+          bodyClassName="p-0"
         >
           {events.length === 0 ? (
-            <EmptyState icon={CircleDollarSign} title="No cost events yet">
-              Each paid call is logged here the instant it happens — that&apos;s what makes the cost
-              metric measured rather than guessed.
-            </EmptyState>
+            <div className="p-4">
+              <EmptyState icon={CircleDollarSign} title="No cost events yet">
+                Each paid call is logged here the instant it happens — that&apos;s what makes the
+                cost metric measured rather than guessed.
+              </EmptyState>
+            </div>
           ) : (
-            <ul>
-              {events.map((e) => (
-                <li
-                  key={e.id}
-                  className="flex items-center justify-between gap-3 border-b px-4 py-2 last:border-b-0"
-                >
-                  <div className="flex min-w-0 items-center gap-2 text-xs">
-                    <RelTime
-                      iso={e.at.toISOString()}
-                      className="whitespace-nowrap tabular-nums text-muted-foreground"
-                    />
-                    <span className="rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-[11px] text-blue-600 dark:text-blue-400">
-                      {e.provider}
-                    </span>
-                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-                      {e.kind}
-                    </span>
-                    {e.tokens_in !== null && (
-                      <span className="whitespace-nowrap tabular-nums text-muted-foreground">
-                        {e.tokens_in}→{e.tokens_out ?? 0} tok
+            <ScrollList maxH="max-h-[26rem]">
+              <ul>
+                {events.map((e) => (
+                  <li
+                    key={e.id}
+                    className="flex items-center justify-between gap-3 border-b px-4 py-2 last:border-b-0"
+                  >
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs">
+                      <RelTime
+                        iso={e.at.toISOString()}
+                        className="whitespace-nowrap tabular-nums text-muted-foreground"
+                      />
+                      <span className="rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-xs text-blue-600 dark:text-blue-400">
+                        {e.provider}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs tabular-nums">{usd(e.cost_usd)}</span>
-                    <JsonModal title={`cost_events/${e.id.slice(0, 8)}`} data={e} />
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
+                        {e.kind}
+                      </span>
+                      {e.tokens_in !== null && (
+                        <span className="whitespace-nowrap tabular-nums text-muted-foreground">
+                          {e.tokens_in}→{e.tokens_out ?? 0} tok
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="font-mono text-xs tabular-nums">{usd(e.cost_usd)}</span>
+                      <JsonModal title={`cost_events/${e.id.slice(0, 8)}`} data={e} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </ScrollList>
           )}
         </SectionCard>
       </div>

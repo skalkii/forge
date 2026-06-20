@@ -7,6 +7,7 @@ import { InfoTip } from "@/components/info-tip";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
@@ -73,10 +74,10 @@ function BudgetGauge({ b }: { b: z.infer<typeof BudgetRow> }) {
       : null;
 
   return (
-    <section className="rounded-lg border bg-card">
-      <header className="flex items-center justify-between border-b px-4 py-2.5">
-        <h2 className="text-sm font-medium capitalize">{b.resource}</h2>
-        <span className="text-xs tabular-nums text-muted-foreground">
+    <section className="surface">
+      <header className="flex items-center justify-between gap-2 border-b px-4 py-2.5">
+        <h2 className="min-w-0 truncate text-sm font-medium capitalize">{b.resource}</h2>
+        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
           {known ? `${b.rate_remaining} / ${b.rate_limit}` : "unknown"}
         </span>
       </header>
@@ -89,13 +90,13 @@ function BudgetGauge({ b }: { b: z.infer<typeof BudgetRow> }) {
             />
           )}
         </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{RESOURCE_HINT[b.resource] ?? "secondary rate-limit pool"}</span>
-          <span className="whitespace-nowrap tabular-nums">
+        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span className="min-w-0">{RESOURCE_HINT[b.resource] ?? "secondary rate-limit pool"}</span>
+          <span className="shrink-0 whitespace-nowrap tabular-nums">
             {resetIn !== null ? `resets in ${resetIn}s` : "window rolled over"}
           </span>
         </div>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Last read <RelTime iso={b.at.toISOString()} /> — budgets come from live{" "}
           <code>x-ratelimit-*</code> headers, never hardcoded (R4).
         </p>
@@ -146,63 +147,65 @@ export default async function GithubSettingsPage() {
         title="Request log"
         description="The most recent calls the agent made to GitHub, with the rate budget remaining at the time of each one. A quick way to confirm the agent is pacing itself and that requests are succeeding."
         aside="last 1h · max 50"
-        bodyClassName=""
+        bodyClassName="p-0"
       >
         {requests.length === 0 ? (
           <EmptyState icon={GitBranch} title="No requests in the last hour">
             Each call the agent makes to GitHub is logged here with its status, budget, and latency.
           </EmptyState>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-4 py-2 font-medium">At</th>
-                <th className="px-4 py-2 font-medium">Resource</th>
-                <th className="px-4 py-2 font-medium">Request</th>
-                <th className="px-4 py-2 text-right font-medium">Status</th>
-                <th className="px-4 py-2 text-right font-medium">Budget</th>
-                <th className="px-4 py-2 text-right font-medium">Latency</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((r) => (
-                <tr key={r.id} className="border-b last:border-b-0">
-                  <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
-                    <RelTime iso={r.at.toISOString()} />
-                  </td>
-                  <td className="px-4 py-2">
-                    <span
-                      className={`rounded px-1.5 py-0.5 font-mono text-[11px] ${
-                        r.resource === "search"
-                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                          : "bg-muted text-muted-foreground"
+          <ScrollList maxH="max-h-[30rem]">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-card">
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">At</th>
+                  <th className="px-4 py-2 font-medium">Resource</th>
+                  <th className="px-4 py-2 font-medium">Request</th>
+                  <th className="px-4 py-2 text-right font-medium">Status</th>
+                  <th className="px-4 py-2 text-right font-medium">Budget</th>
+                  <th className="px-4 py-2 text-right font-medium">Latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests.map((r) => (
+                  <tr key={r.id} className="border-b last:border-b-0">
+                    <td className="whitespace-nowrap px-4 py-2 tabular-nums text-muted-foreground">
+                      <RelTime iso={r.at.toISOString()} />
+                    </td>
+                    <td className="px-4 py-2">
+                      <span
+                        className={`inline-block rounded px-1.5 py-0.5 font-mono text-xs ${
+                          r.resource === "search"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {r.resource}
+                      </span>
+                    </td>
+                    <td className="max-w-80 truncate px-4 py-2 font-mono text-xs">
+                      {r.method} {r.route}
+                    </td>
+                    <td
+                      className={`px-4 py-2 text-right tabular-nums ${
+                        r.status && r.status < 400 ? "" : "text-rose-500"
                       }`}
                     >
-                      {r.resource}
-                    </span>
-                  </td>
-                  <td className="max-w-80 truncate px-4 py-2 font-mono text-xs">
-                    {r.method} {r.route}
-                  </td>
-                  <td
-                    className={`px-4 py-2 text-right tabular-nums ${
-                      r.status && r.status < 400 ? "" : "text-rose-500"
-                    }`}
-                  >
-                    {r.status ?? "—"}
-                  </td>
-                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
-                    {r.rate_remaining !== null && r.rate_limit !== null
-                      ? `${r.rate_remaining}/${r.rate_limit}`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
-                    {r.latency_ms !== null ? `${r.latency_ms}ms` : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      {r.status ?? "—"}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                      {r.rate_remaining !== null && r.rate_limit !== null
+                        ? `${r.rate_remaining}/${r.rate_limit}`
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                      {r.latency_ms !== null ? `${r.latency_ms}ms` : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollList>
         )}
       </SectionCard>
     </div>

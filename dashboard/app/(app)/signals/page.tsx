@@ -7,6 +7,7 @@ import { JsonModal } from "@/components/json-modal";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
@@ -142,17 +143,23 @@ export default async function SignalsPage({
         term="signal"
         description="One row per GitHub thread, newest first. Click the title to read it on GitHub, or open the raw record to see exactly what we stored."
         aside={`${signals.length} shown · newest first`}
-        bodyClassName=""
+        bodyClassName="p-0"
       >
         {signals.length === 0 ? (
-          <EmptyState icon={Radar} title={`No signals${q || repo ? " match this filter" : " yet"}`}>
-            Discovery runs write threads here as it finds them. Trigger one manually with{" "}
-            <code className="font-mono">pnpm --filter agent loop</code>.
-          </EmptyState>
+          <div className="p-4">
+            <EmptyState
+              icon={Radar}
+              title={`No signals${q || repo ? " match this filter" : " yet"}`}
+            >
+              Discovery runs write threads here as it finds them. Trigger one manually with{" "}
+              <code className="font-mono">pnpm --filter agent loop</code>.
+            </EmptyState>
+          </div>
         ) : (
-          <ul>
-            {signals.map((s) => (
-              <li key={s.id} className="border-b px-4 py-3 last:border-b-0">
+          <ScrollList maxH="max-h-[34rem]">
+            <ul>
+              {signals.map((s) => (
+                <li key={s.id} className="border-b px-4 py-3 last:border-b-0">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <a
@@ -164,10 +171,10 @@ export default async function SignalsPage({
                       {s.title}
                     </a>
                     <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{s.excerpt}</p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                      <span className="font-mono">{s.repo}</span>
-                      <span>by {s.author}</span>
-                      <RelTime iso={s.found_at.toISOString()} className="tabular-nums" />
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="max-w-full truncate font-mono">{s.repo}</span>
+                      <span className="truncate">by {s.author}</span>
+                      <RelTime iso={s.found_at.toISOString()} className="shrink-0 tabular-nums" />
                       <span
                         className="max-w-56 truncate rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400"
                         title={s.query}
@@ -198,11 +205,11 @@ export default async function SignalsPage({
                                 href={d.url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="hover:underline"
+                                className="break-words hover:underline"
                               >
                                 {d.title}
                               </a>{" "}
-                              <span className="font-mono text-[11px]">
+                              <span className="break-words font-mono">
                                 {d.repo} · {d.author}
                               </span>
                             </li>
@@ -211,11 +218,14 @@ export default async function SignalsPage({
                       </details>
                     )}
                   </div>
-                  <JsonModal title={`signals/${s.id.slice(0, 8)}`} data={s} />
+                  <div className="shrink-0">
+                    <JsonModal title={`signals/${s.id.slice(0, 8)}`} data={s} />
+                  </div>
                 </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </ScrollList>
         )}
       </SectionCard>
     </div>

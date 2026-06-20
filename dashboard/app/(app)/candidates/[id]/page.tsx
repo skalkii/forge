@@ -10,6 +10,7 @@ import { JsonModal } from "@/components/json-modal";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { StatusPill } from "@/components/status-pill";
 import { query, queryOne } from "@/lib/db";
@@ -173,8 +174,8 @@ export default async function CandidateDetailPage({
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span className="font-mono">{candidate.id.slice(0, 8)}</span>
         <StatusPill status={candidate.status} />
-        <span className="font-mono">{candidate.repo}</span>
-        <span>by {candidate.author}</span>
+        <span className="max-w-full truncate font-mono">{candidate.repo}</span>
+        <span className="truncate">by {candidate.author}</span>
         <span>
           found <RelTime iso={candidate.found_at.toISOString()} className="tabular-nums" />
         </span>
@@ -240,8 +241,12 @@ export default async function CandidateDetailPage({
         term="signal"
         description="The public GitHub thread that started this. We store only the minimum needed to act — the matched excerpt, the link, the repo, and the search that found it."
       >
-        <p className="whitespace-pre-wrap text-sm leading-relaxed">{candidate.excerpt}</p>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <ScrollList maxH="max-h-72">
+          <p className="whitespace-pre-wrap break-words pr-2 text-sm leading-relaxed">
+            {candidate.excerpt}
+          </p>
+        </ScrollList>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <a
             href={candidate.url}
             target="_blank"
@@ -278,11 +283,15 @@ export default async function CandidateDetailPage({
             </dt>
             <dd className="mt-0.5">
               {candidate.qualify_reasons && candidate.qualify_reasons.length > 0 ? (
-                <ul className="list-disc space-y-1 pl-5 leading-relaxed">
-                  {candidate.qualify_reasons.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
+                <ScrollList maxH="max-h-72">
+                  <ul className="list-disc space-y-1 pl-5 pr-2 leading-relaxed">
+                    {candidate.qualify_reasons.map((r, i) => (
+                      <li key={i} className="break-words">
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollList>
               ) : (
                 "—"
               )}
@@ -378,11 +387,11 @@ export default async function CandidateDetailPage({
           <ul className="space-y-4">
             {touches.map((t) => (
               <li key={t.id} className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-mono">touch/{t.id.slice(0, 8)}</span>
                   {t.template_id ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400">
-                      {t.template_id}
+                    <span className="inline-flex max-w-full items-center gap-1 truncate rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400">
+                      <span className="truncate">{t.template_id}</span>
                       <InfoTip term="snippet" />
                     </span>
                   ) : null}

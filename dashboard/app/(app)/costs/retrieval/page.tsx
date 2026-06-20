@@ -7,6 +7,7 @@ import { JsonModal } from "@/components/json-modal";
 import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { query } from "@/lib/db";
@@ -156,54 +157,60 @@ export default async function RetrievalPage() {
         term="retrieval"
         description="Each unique research request we've paid for, with how many times the cached answer was reused since (hits) and what the original call cost (miss cost). Newest use first."
         aside="by last use · max 50"
-        bodyClassName=""
+        bodyClassName="p-0"
       >
         {entries.length === 0 ? (
-          <EmptyState icon={Search} title="No retrieval calls yet">
-            The qualify agent fires Exa and Parallel only on shortlisted candidates — so nothing
-            is spent until a thread is worth researching.
-          </EmptyState>
+          <div className="p-4">
+            <EmptyState icon={Search} title="No retrieval calls yet">
+              The qualify agent fires Exa and Parallel only on shortlisted candidates — so nothing
+              is spent until a thread is worth researching.
+            </EmptyState>
+          </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="px-4 py-2 font-medium">Provider</th>
-                <th className="px-4 py-2 font-medium">Request</th>
-                <th className="px-4 py-2 text-right font-medium">Hits</th>
-                <th className="px-4 py-2 text-right font-medium">Miss cost</th>
-                <th className="px-4 py-2 text-right font-medium">Last used</th>
-                <th className="px-4 py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e) => (
-                <tr key={e.id} className="border-b last:border-b-0">
-                  <td className="px-4 py-2">
-                    <span
-                      className={`rounded px-1.5 py-0.5 font-mono text-[11px] ${
-                        e.provider === "exa"
-                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                          : "bg-violet-500/10 text-violet-600 dark:text-violet-400"
-                      }`}
-                    >
-                      {e.provider}
-                    </span>
-                  </td>
-                  <td className="max-w-96 truncate px-4 py-2 text-xs">{requestLabel(e.request)}</td>
-                  <td className="px-4 py-2 text-right tabular-nums">{e.hits}</td>
-                  <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
-                    {usd(e.cost_usd)}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-muted-foreground">
-                    <RelTime iso={e.last_used_at.toISOString()} />
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <JsonModal title={`retrieval_cache/${e.id.slice(0, 8)}`} data={e} />
-                  </td>
+          <ScrollList maxH="max-h-[32rem]">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-card">
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="px-4 py-2 font-medium">Provider</th>
+                  <th className="px-4 py-2 font-medium">Request</th>
+                  <th className="px-4 py-2 text-right font-medium">Hits</th>
+                  <th className="px-4 py-2 text-right font-medium">Miss cost</th>
+                  <th className="px-4 py-2 text-right font-medium">Last used</th>
+                  <th className="px-4 py-2" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {entries.map((e) => (
+                  <tr key={e.id} className="border-b last:border-b-0">
+                    <td className="px-4 py-2">
+                      <span
+                        className={`rounded px-1.5 py-0.5 font-mono text-xs ${
+                          e.provider === "exa"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                            : "bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                        }`}
+                      >
+                        {e.provider}
+                      </span>
+                    </td>
+                    <td className="max-w-96 truncate px-4 py-2 text-xs">
+                      {requestLabel(e.request)}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">{e.hits}</td>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                      {usd(e.cost_usd)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-muted-foreground">
+                      <RelTime iso={e.last_used_at.toISOString()} />
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <JsonModal title={`retrieval_cache/${e.id.slice(0, 8)}`} data={e} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollList>
         )}
       </SectionCard>
     </div>

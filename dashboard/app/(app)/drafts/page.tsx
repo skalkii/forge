@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/page-header";
 import { ReviewButtons } from "@/components/review-buttons";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { ScrollList } from "@/components/scroll-list";
 import { SectionCard } from "@/components/section-card";
 import { query, queryOne } from "@/lib/db";
 
@@ -132,18 +133,21 @@ export default async function DraftsPage() {
         term="draft"
         description="Replies finished by the Craft agent and paused at the human gate. Read the original thread, check the highlighted disclosure line and the guardrail scores, edit if needed, then approve or reject. Your decision resumes the paused run."
         aside={<span className="tabular-nums">{drafts.length} pending</span>}
-        bodyClassName="p-4"
+        bodyClassName="p-0"
       >
       {drafts.length === 0 ? (
-        <EmptyState icon={Inbox} title="No replies waiting">
-          Drafts that pass the spam guardrail appear here for approval. When a touch run reaches the
-          human gate it pauses and lands in this queue — nothing about it is public until you
-          approve it.
-        </EmptyState>
+        <div className="p-4">
+          <EmptyState icon={Inbox} title="No replies waiting">
+            Drafts that pass the spam guardrail appear here for approval. When a touch run reaches
+            the human gate it pauses and lands in this queue — nothing about it is public until you
+            approve it.
+          </EmptyState>
+        </div>
       ) : (
-        <ul className="space-y-4">
+        <ScrollList maxH="max-h-[calc(100vh-15rem)]">
+        <ul className="space-y-4 p-4">
           {drafts.map((d) => (
-            <li key={d.touch_id} className="space-y-3 rounded-lg border bg-card p-4">
+            <li key={d.touch_id} className="surface space-y-3 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <a
@@ -154,9 +158,9 @@ export default async function DraftsPage() {
                   >
                     {d.title}
                   </a>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                    <span className="font-mono">{d.repo}</span>
-                    <span>by {d.author}</span>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="break-all font-mono">{d.repo}</span>
+                    <span className="break-words">by {d.author}</span>
                     <span className="inline-flex items-center gap-0.5">
                       fit{" "}
                       <span className="tabular-nums">
@@ -187,19 +191,23 @@ export default async function DraftsPage() {
                     </Link>
                   </div>
                 </div>
-                <JsonModal title={`touches/${d.touch_id.slice(0, 8)}`} data={d} />
+                <span className="shrink-0">
+                  <JsonModal title={`touches/${d.touch_id.slice(0, 8)}`} data={d} />
+                </span>
               </div>
 
               <details>
                 <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
                   Original thread excerpt
                 </summary>
-                <p className="mt-1.5 whitespace-pre-wrap border-l-2 pl-3 text-xs leading-relaxed text-muted-foreground">
-                  {d.excerpt}
-                </p>
+                <ScrollList maxH="max-h-64" className="mt-1.5">
+                  <p className="whitespace-pre-wrap break-words border-l-2 pl-3 pr-2 text-xs leading-relaxed text-muted-foreground">
+                    {d.excerpt}
+                  </p>
+                </ScrollList>
               </details>
 
-              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span
                   className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${
                     d.guardrail?.score === 1
@@ -292,6 +300,7 @@ export default async function DraftsPage() {
             </li>
           ))}
         </ul>
+        </ScrollList>
       )}
       </SectionCard>
     </div>
