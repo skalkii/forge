@@ -48,76 +48,89 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ── Elevation tokens → utilities (shadow-card / shadow-pop) ── */
+@theme inline {
+  --shadow-card: var(--shadow-card-value);
+  --shadow-pop: var(--shadow-pop-value);
+}
+
 /* Warm "Anthropic" palette — ivory paper in light, warm charcoal in dark,
    terracotta accent. Status colors stay semantic: pending=slate,
-   running=blue, suspended=amber, approved/posted=emerald, rejected=rose. */
+   running=blue, suspended=amber, approved/posted=emerald, rejected=rose.
+   Body + muted text contrast tuned toward WCAG AA. */
 :root {
-  --background: oklch(0.977 0.005 84);
-  --foreground: oklch(0.245 0.008 60);
-  --card: oklch(0.995 0.003 84);
-  --card-foreground: oklch(0.245 0.008 60);
-  --popover: oklch(0.995 0.003 84);
-  --popover-foreground: oklch(0.245 0.008 60);
-  --primary: oklch(0.62 0.14 40);
-  --primary-foreground: oklch(0.985 0.005 84);
-  --secondary: oklch(0.945 0.007 80);
+  --background: oklch(0.978 0.005 84);
+  --foreground: oklch(0.235 0.008 60);
+  --card: oklch(0.998 0.002 84);
+  --card-foreground: oklch(0.235 0.008 60);
+  --popover: oklch(0.998 0.002 84);
+  --popover-foreground: oklch(0.235 0.008 60);
+  --primary: oklch(0.6 0.145 40);
+  --primary-foreground: oklch(0.99 0.004 84);
+  --secondary: oklch(0.948 0.007 80);
   --secondary-foreground: oklch(0.3 0.01 60);
-  --muted: oklch(0.945 0.007 80);
-  --muted-foreground: oklch(0.51 0.014 70);
+  --muted: oklch(0.948 0.007 80);
+  /* darkened from 0.51 → 0.475 for stronger contrast on card surfaces */
+  --muted-foreground: oklch(0.475 0.015 70);
   --accent: oklch(0.935 0.012 75);
   --accent-foreground: oklch(0.3 0.02 50);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.008 80);
-  --input: oklch(0.9 0.008 80);
-  --ring: oklch(0.62 0.1 40);
-  --chart-1: oklch(0.65 0.15 40);
-  --chart-2: oklch(0.6 0.09 200);
-  --chart-3: oklch(0.75 0.12 85);
+  --border: oklch(0.895 0.008 80);
+  --input: oklch(0.895 0.008 80);
+  --ring: oklch(0.6 0.12 40);
+  --chart-1: oklch(0.62 0.15 40);
+  --chart-2: oklch(0.58 0.09 200);
+  --chart-3: oklch(0.72 0.12 85);
   --chart-4: oklch(0.55 0.12 320);
-  --chart-5: oklch(0.65 0.1 130);
+  --chart-5: oklch(0.62 0.1 130);
   --radius: 0.625rem;
-  --sidebar: oklch(0.963 0.006 84);
-  --sidebar-foreground: oklch(0.245 0.008 60);
-  --sidebar-primary: oklch(0.62 0.14 40);
-  --sidebar-primary-foreground: oklch(0.985 0.005 84);
-  --sidebar-accent: oklch(0.925 0.012 75);
+  --sidebar: oklch(0.962 0.006 84);
+  --sidebar-foreground: oklch(0.235 0.008 60);
+  --sidebar-primary: oklch(0.6 0.145 40);
+  --sidebar-primary-foreground: oklch(0.99 0.004 84);
+  --sidebar-accent: oklch(0.924 0.012 75);
   --sidebar-accent-foreground: oklch(0.3 0.02 50);
-  --sidebar-border: oklch(0.9 0.008 80);
-  --sidebar-ring: oklch(0.62 0.1 40);
+  --sidebar-border: oklch(0.895 0.008 80);
+  --sidebar-ring: oklch(0.6 0.12 40);
+  /* soft, warm-tinted elevation — barely there, never a heavy slab */
+  --shadow-card-value: 0 1px 2px -1px oklch(0.4 0.02 60 / 0.08), 0 2px 8px -3px oklch(0.4 0.02 60 / 0.06);
+  --shadow-pop-value: 0 4px 12px -2px oklch(0.3 0.02 60 / 0.12), 0 12px 32px -8px oklch(0.3 0.02 60 / 0.14);
 }
 
 .dark {
-  --background: oklch(0.215 0.006 70);
-  --foreground: oklch(0.93 0.006 84);
-  --card: oklch(0.255 0.007 70);
-  --card-foreground: oklch(0.93 0.006 84);
-  --popover: oklch(0.255 0.007 70);
-  --popover-foreground: oklch(0.93 0.006 84);
-  --primary: oklch(0.7 0.14 42);
-  --primary-foreground: oklch(0.18 0.005 70);
+  --background: oklch(0.205 0.006 70);
+  --foreground: oklch(0.935 0.006 84);
+  --card: oklch(0.248 0.007 70);
+  --card-foreground: oklch(0.935 0.006 84);
+  --popover: oklch(0.248 0.007 70);
+  --popover-foreground: oklch(0.935 0.006 84);
+  --primary: oklch(0.72 0.14 45);
+  --primary-foreground: oklch(0.17 0.005 70);
   --secondary: oklch(0.3 0.007 70);
-  --secondary-foreground: oklch(0.93 0.006 84);
+  --secondary-foreground: oklch(0.935 0.006 84);
   --muted: oklch(0.3 0.007 70);
-  --muted-foreground: oklch(0.72 0.01 80);
-  --accent: oklch(0.31 0.009 70);
-  --accent-foreground: oklch(0.93 0.006 84);
+  --muted-foreground: oklch(0.735 0.012 80);
+  --accent: oklch(0.32 0.009 70);
+  --accent-foreground: oklch(0.935 0.006 84);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.1 42);
-  --chart-1: oklch(0.7 0.15 42);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.72 0.1 45);
+  --chart-1: oklch(0.72 0.15 45);
   --chart-2: oklch(0.68 0.1 200);
   --chart-3: oklch(0.8 0.12 85);
   --chart-4: oklch(0.65 0.12 320);
   --chart-5: oklch(0.72 0.1 130);
-  --sidebar: oklch(0.19 0.005 70);
-  --sidebar-foreground: oklch(0.93 0.006 84);
-  --sidebar-primary: oklch(0.7 0.14 42);
-  --sidebar-primary-foreground: oklch(0.18 0.005 70);
-  --sidebar-accent: oklch(0.29 0.008 70);
-  --sidebar-accent-foreground: oklch(0.93 0.006 84);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.7 0.1 42);
+  --sidebar: oklch(0.182 0.005 70);
+  --sidebar-foreground: oklch(0.935 0.006 84);
+  --sidebar-primary: oklch(0.72 0.14 45);
+  --sidebar-primary-foreground: oklch(0.17 0.005 70);
+  --sidebar-accent: oklch(0.288 0.008 70);
+  --sidebar-accent-foreground: oklch(0.935 0.006 84);
+  --sidebar-border: oklch(1 0 0 / 11%);
+  --sidebar-ring: oklch(0.72 0.1 45);
+  --shadow-card-value: 0 1px 2px -1px oklch(0 0 0 / 0.3), 0 2px 10px -4px oklch(0 0 0 / 0.35);
+  --shadow-pop-value: 0 6px 16px -2px oklch(0 0 0 / 0.45), 0 16px 40px -8px oklch(0 0 0 / 0.5);
 }
 
 @layer base {
@@ -126,8 +139,34 @@
   }
   body {
     @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
   }
   html {
-    @apply font-sans;
+    @apply font-sans antialiased;
+  }
+  /* Headings use the serif display face, tightened. */
+  h1, h2, h3 {
+    @apply font-heading tracking-tight;
+  }
+  /* Warm selection. */
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 22%, transparent);
+  }
+  /* Thin, theme-aware scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+}
+
+@layer components {
+  /* One canonical elevated surface so every panel reads the same. */
+  .surface {
+    @apply rounded-xl border bg-card;
+    box-shadow: var(--shadow-card);
+  }
+  /* Caption / definition text — used under cards and section headers. */
+  .text-caption {
+    @apply text-xs leading-relaxed text-muted-foreground;
   }
 }
