@@ -1,25 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Lora } from "next/font/google";
+import { JetBrains_Mono, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Body / UI — friendly, modern, highly legible.
+const sans = Plus_Jakarta_Sans({
+  variable: "--font-sans-face",
   subsets: ["latin"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const lora = Lora({
-  variable: "--font-lora",
+// Headings / display — geometric with character.
+const display = Space_Grotesk({
+  variable: "--font-display-face",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
+  display: "swap",
+});
+
+// Numbers, IDs, code.
+const mono = JetBrains_Mono({
+  variable: "--font-mono-face",
+  subsets: ["latin"],
   display: "swap",
 });
 
@@ -31,11 +34,7 @@ export const metadata: Metadata = {
   description:
     "Review queue and live operations dashboard for the VideoDB Growth Agent — find developers stuck on problems VideoDB solves, help them, and measure cost per activated developer.",
   applicationName: "Forge",
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
-  },
+  // Icons resolved by file convention: app/icon.svg (crisp) + app/favicon.ico (legacy).
 };
 
 export const viewport: Viewport = {
@@ -52,7 +51,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} antialiased`}>
+      <body className={`${sans.variable} ${display.variable} ${mono.variable} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
