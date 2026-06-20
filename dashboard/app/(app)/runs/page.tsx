@@ -10,7 +10,9 @@ export const dynamic = "force-dynamic";
 
 const StepRow = z.object({
   id: z.string(),
-  status: z.string(),
+  // null when a context entry carries no status yet (a step not reached) — the
+  // UI renders those as "pending". Mastra snapshots don't guarantee the key.
+  status: z.string().nullable(),
   startedAt: z.number().nullable(),
   endedAt: z.number().nullable(),
 });

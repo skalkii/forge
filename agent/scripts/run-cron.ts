@@ -13,11 +13,13 @@ import { config } from "dotenv";
 
 config({ path: fileURLToPath(new URL("../../.env", import.meta.url)), quiet: true });
 
-const { mastra } = await import("../src/mastra/index");
+const { mastra, store } = await import("../src/mastra/index");
 const { dispatchOnce } = await import("../src/mastra/dispatcher");
 const { attributeOnce } = await import("../src/mastra/lib/attribution");
 const { purgeOnce } = await import("../src/mastra/lib/retention");
 const { recordError } = await import("../src/mastra/lib/errors");
+const { disposeEmbedder } = await import("../src/mastra/lib/dedup");
+const { getPool } = await import("../src/mastra/lib/db");
 
 const MIN = 60_000;
 const discoveryEveryMin = Number(process.env.DISCOVERY_INTERVAL_MIN) || 20;
@@ -27,6 +29,8 @@ async function discovery() {
   const result = await run.start({ inputData: {} });
   return { runId: run.runId, status: result.status };
 }
+
+const timers: NodeJS.Timeout[] = [];
 
 function schedule(name: string, everyMs: number, job: () => Promise<unknown>) {
   let running = false;
@@ -45,7 +49,7 @@ function schedule(name: string, everyMs: number, job: () => Promise<unknown>) {
     }
   };
   void tick();
-  setInterval(tick, everyMs);
+  timers.push(setInterval(tick, everyMs));
 }
 
 console.log(
@@ -57,3 +61,22 @@ schedule("discovery", discoveryEveryMin * MIN, discovery);
 schedule("dispatch", 2 * MIN, dispatchOnce);
 schedule("attribution", 60 * MIN, attributeOnce);
 schedule("purge", 24 * 60 * MIN, purgeOnce);
+
+// Graceful shutdown: stop the timers, release the onnxruntime session, close
+// pools, then let the event loop drain. Calling process.exit() while ORT is
+// alive aborts (exit 134, `mutex lock failed`); draining after release exits
+// clean. A watchdog forces exit only if some handle refuses to close.
+let shuttingDown = false;
+for (const sig of ["SIGINT", "SIGTERM"] as const) {
+  process.once(sig, () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[cron] ${sig} — shutting down`);
+    for (const t of timers) clearInterval(t);
+    void disposeEmbedder()
+      .then(() => Promise.allSettled([store.close(), getPool().end()]))
+      .finally(() => {
+        setTimeout(() => process.exit(0), 4000).unref();
+      });
+  });
+}

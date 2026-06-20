@@ -4,6 +4,16 @@
 >
 > Full architecture, diagrams, and costs are in `docs/videodb-growth-agent-architecture.pdf`.
 
+> **This file is the engineer's spec** — precise, dense, and the contract the build follows. **If you're not an engineer** (or want the clear picture before the detail), read the plain-English, diagram-led guide in **[`docs/explained/`](docs/explained/)** first: [the architecture](docs/explained/01-architecture-explained.md), [the loop](docs/explained/02-the-loop-explained.md), and [the dashboard](docs/explained/03-dashboard-explained.md). Every term is defined there.
+
+---
+
+## Plain-English summary (one minute, any reader)
+
+We find software developers who are **publicly stuck** on GitHub with a problem VideoDB solves (extracting video frames, transcribing speech with timestamps, searching inside video). We **help them genuinely** — a useful reply with a working, pre-tested VideoDB example — and **a real person approves every reply before it's posted**. When a developer we helped later makes their **first successful VideoDB API call**, we count it, and we track **how much we spent to make that happen** (*cost per activated developer*).
+
+The system runs one loop — **Sense → Qualify → Craft → [human gate] → Act → Observe** — where only three steps use AI (a cheap one to filter, a strong one to judge, a strong one to write), and everything else is plain, predictable code. The human gate is mandatory: the parts that can post in public are wired to no AI and run only *after* approval. (For the full, friendly version with diagrams, see [`docs/explained/`](docs/explained/).)
+
 ---
 
 ## ⚠️ Non-negotiable constraints — respect these in every change

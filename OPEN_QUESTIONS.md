@@ -1,8 +1,19 @@
 # OPEN_QUESTIONS
 
-Live tracker for items pending VideoDB input and verify-at-build-time items the plan deliberately did not assume. Builds do not block on these — interfaces stub them and env vars expose them.
+### What is this page? (plain English)
 
-Update as items resolve: move resolved items to a dated **Resolved** section at the bottom, do not delete.
+Every project has a few things it can't decide on its own — answers it needs from a partner, or facts it should double-check rather than assume. Instead of guessing and hoping, we write them down here, out in the open.
+
+There are **two lists**:
+
+1. **For VideoDB — needs answer.** Questions only VideoDB can answer (which signup data we can use, who approves replies, preferred wording, and so on). For each one we picked a **sensible default** so building never stops while we wait — we just swap in the real answer when it arrives.
+2. **Verify at build time.** Facts we deliberately refused to take on faith (current software behavior, vendor prices, GitHub's real limits). For each, we note exactly **how we'll check it** rather than trusting a number someone wrote down once.
+
+**Nothing here blocks progress.** Each item has a safe placeholder, and the code is built so the real answer drops in cleanly later. When an item is settled, we move it to the **Resolved** section at the bottom (with a date) rather than deleting it — so the history of *why* a choice was made is never lost.
+
+> **A few terms used below:** **attribution** = proving a signup happened *because of* a reply we posted · **UTM** = an invisible tag on a link that records which reply a visit came from · **stub** = a temporary stand-in that behaves like the real thing until the real one is delivered · **env var** = a setting kept outside the code (in a `.env` file) so it can change without editing the program · **rate limit** = how often a service like GitHub lets you make requests · **embedding / pgvector** = turning text into numbers that capture its meaning, used to spot duplicate threads.
+
+_For maintainers: builds do not block on these — interfaces stub them and env vars expose them. Update as items resolve: move resolved items to a dated **Resolved** section at the bottom, do not delete._
 
 ---
 
