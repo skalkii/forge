@@ -1,9 +1,14 @@
+import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
 import { ForgetUserForm } from "@/components/forget-user-form";
+import { InfoTip } from "@/components/info-tip";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { SectionCard } from "@/components/section-card";
 import { query, queryOne } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -66,30 +71,30 @@ export default async function DataSettingsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["signals", "audit_log"]} />
-      <div>
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">Data & retention</h1>
-          <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
-            ← Settings
-          </Link>
-        </div>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Data minimization (R7): the system stores only the public GitHub data needed to draft
-          one helpful reply. Raw signals that never became candidates are purged on a nightly
-          horizon, and any person can be deleted entirely, on request, by username.
-        </p>
-      </div>
+      <PageHeader
+        title="Data & retention"
+        stage="ops"
+        description="Privacy by design. The system keeps only the public GitHub data it needs to draft one helpful reply — nothing more. Raw threads that never went anywhere are deleted automatically after a set number of days, and any person can ask to be removed entirely, by username, with one form below."
+        sources={["signals", "audit_log"]}
+      >
+        <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
+          ← Settings
+        </Link>
+      </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <section className="rounded-lg border bg-card px-4 py-3">
-          <p className="text-xs text-muted-foreground">Retention horizon</p>
+        <section className="surface px-4 py-3">
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            Retention horizon
+            <InfoTip term="retention" />
+          </p>
           <p className="mt-1 text-lg font-semibold tabular-nums">{days} days</p>
           <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">
-            SIGNAL_RETENTION_DAYS — raw unqualified signals older than this are deleted by the
-            purge job.
+            Set by SIGNAL_RETENTION_DAYS — raw unqualified signals older than this are deleted by
+            the purge job.
           </p>
         </section>
-        <section className="rounded-lg border bg-card px-4 py-3">
+        <section className="surface px-4 py-3">
           <p className="text-xs text-muted-foreground">Purgeable now</p>
           <p className="mt-1 text-lg font-semibold tabular-nums">{stats.purgeable}</p>
           <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">
@@ -97,7 +102,7 @@ export default async function DataSettingsPage() {
             <code className="font-mono">pnpm purge</code> run deletes exactly these.
           </p>
         </section>
-        <section className="rounded-lg border bg-card px-4 py-3">
+        <section className="surface px-4 py-3">
           <p className="text-xs text-muted-foreground">Signals stored</p>
           <p className="mt-1 text-lg font-semibold tabular-nums">{stats.total_signals}</p>
           <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">
@@ -110,7 +115,7 @@ export default async function DataSettingsPage() {
             )}
           </p>
         </section>
-        <section className="rounded-lg border bg-card px-4 py-3">
+        <section className="surface px-4 py-3">
           <p className="text-xs text-muted-foreground">Distinct authors</p>
           <p className="mt-1 text-lg font-semibold tabular-nums">{stats.authors}</p>
           <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">
@@ -120,11 +125,12 @@ export default async function DataSettingsPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-lg border bg-card">
-          <header className="border-b px-4 py-2.5">
-            <h2 className="text-sm font-medium">What we store — and don&apos;t</h2>
-          </header>
-          <div className="grid grid-cols-2 gap-4 px-4 py-3 text-xs">
+        <SectionCard
+          title="What we store — and don't"
+          description="The complete list of what's kept versus what's deliberately never collected. Data minimization means holding the least we can to do the job."
+          bodyClassName="p-4"
+        >
+          <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
               <p className="mb-1.5 font-medium text-emerald-600 dark:text-emerald-400">Stored</p>
               <ul className="space-y-1 text-muted-foreground">
@@ -142,33 +148,33 @@ export default async function DataSettingsPage() {
               </ul>
             </div>
           </div>
-        </section>
+        </SectionCard>
 
-        <section className="rounded-lg border bg-card">
-          <header className="border-b px-4 py-2.5">
-            <h2 className="text-sm font-medium">Forget a user</h2>
-          </header>
-          <div className="space-y-3 px-4 py-3">
+        <SectionCard
+          title="Forget a user"
+          description="A privacy off-switch for one person. Enter a GitHub username and every row tied to it is deleted permanently — the signal cascades through candidates, touches, and outcomes — and the deletion is audit-logged."
+        >
+          <div className="space-y-3">
             <p className="text-xs leading-relaxed text-muted-foreground">
-              Deletes every row for one GitHub username — the signal cascades through candidates,
-              touches, and outcomes. Irreversible, audit-logged. Same effect as{" "}
-              <code className="font-mono">pnpm --filter agent forget-user &lt;username&gt;</code>.
+              Irreversible. Same effect as running{" "}
+              <code className="font-mono">pnpm --filter agent forget-user &lt;username&gt;</code> on
+              the server.
             </p>
             <ForgetUserForm />
           </div>
-        </section>
+        </SectionCard>
       </div>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Deletion log</h2>
-          <span className="text-xs text-muted-foreground">purges + forget-user, last 10</span>
-        </header>
+      <SectionCard
+        title="Deletion log"
+        description="Proof the privacy promises are kept: every automatic purge run and every forget-user request, pulled straight from the audit log."
+        aside="purges + forget-user, last 10"
+        bodyClassName=""
+      >
         {log.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-muted-foreground">
-            No deletions yet — purge runs and forget-user actions are recorded here from the
-            audit log.
-          </div>
+          <EmptyState icon={Trash2} title="No deletions yet">
+            Purge runs and forget-user actions are recorded here from the audit log as they happen.
+          </EmptyState>
         ) : (
           <ul>
             {log.map((e) => (
@@ -200,7 +206,7 @@ export default async function DataSettingsPage() {
             ))}
           </ul>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }

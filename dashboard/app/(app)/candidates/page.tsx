@@ -1,10 +1,14 @@
+import { Compass } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
 import { JsonModal } from "@/components/json-modal";
-import { PageIntro } from "@/components/page-intro";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { SectionCard } from "@/components/section-card";
 import { StatusPill, CANDIDATE_STATUSES } from "@/components/status-pill";
 import { query } from "@/lib/db";
 
@@ -73,53 +77,62 @@ export default async function CandidatesPage({
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["candidates", "signals", "touches"]} />
-      <PageIntro title="Candidates">
-        Signals that passed triage, each moving through the pipeline: qualify (is VideoDB genuinely
-        the answer?) → craft (template + reply) → review (a human decides) → outcome. One row per
-        candidate; click through for the full journey, drafts, and scorer verdicts.
-      </PageIntro>
+      <PageHeader
+        title="Candidates"
+        stage="sense"
+        description="Threads the cheap triage AI judged worth pursuing. Each one runs its own touch — qualify (is VideoDB genuinely the answer?), then craft (template + reply), then the human gate. Click any candidate for its full history, drafts, and scorer verdicts."
+        sources={["candidates", "signals"]}
+      />
 
-      <div className="flex flex-wrap items-center gap-1.5 text-xs">
-        <Link
-          href="/candidates"
-          className={`rounded-full border px-2.5 py-1 ${
-            !active ? "bg-foreground text-background" : "bg-card hover:bg-accent"
-          }`}
-        >
-          all <span className="tabular-nums opacity-70">{total}</span>
-        </Link>
-        {CANDIDATE_STATUSES.map((s) => {
-          const n = countBy.get(s) ?? 0;
-          return (
-            <Link
-              key={s}
-              href={`/candidates?status=${s}`}
-              className={`rounded-full border px-2.5 py-1 ${
-                active === s
-                  ? "bg-foreground text-background"
-                  : n === 0
-                    ? "bg-card text-muted-foreground/50"
-                    : "bg-card hover:bg-accent"
-              }`}
-            >
-              {s} <span className="tabular-nums opacity-70">{n}</span>
-            </Link>
-          );
-        })}
-      </div>
+      <SectionCard
+        title="Filter by stage"
+        description="Each candidate sits at one stage of the pipeline. Click a chip to show only candidates currently at that stage; the number is how many are there now."
+      >
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          <Link
+            href="/candidates"
+            className={`rounded-full border px-2.5 py-1 ${
+              !active ? "bg-foreground text-background" : "bg-card hover:bg-accent"
+            }`}
+          >
+            all <span className="tabular-nums opacity-70">{total}</span>
+          </Link>
+          {CANDIDATE_STATUSES.map((s) => {
+            const n = countBy.get(s) ?? 0;
+            return (
+              <Link
+                key={s}
+                href={`/candidates?status=${s}`}
+                className={`rounded-full border px-2.5 py-1 ${
+                  active === s
+                    ? "bg-foreground text-background"
+                    : n === 0
+                      ? "bg-card text-muted-foreground/50"
+                      : "bg-card hover:bg-accent"
+                }`}
+              >
+                {s} <span className="tabular-nums opacity-70">{n}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </SectionCard>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Queue</h2>
-          <span className="text-xs text-muted-foreground">
-            {candidates.length} shown · most recently updated first
-          </span>
-        </header>
+      <SectionCard
+        title="Queue"
+        term="candidate"
+        description="One row per candidate, most recently updated first. The two scores show how the AIs rated it; click a title to open its full journey."
+        aside={`${candidates.length} shown · most recently updated first`}
+        bodyClassName=""
+      >
         {candidates.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-muted-foreground">
-            No candidates{active ? ` in '${active}'` : " yet"}. Discovery enqueues them when a
-            signal scores above the triage threshold.
-          </div>
+          <EmptyState
+            icon={Compass}
+            title={`No candidates${active ? ` at the '${active}' stage` : " yet"}`}
+          >
+            Discovery enqueues a candidate whenever a signal scores above the triage threshold —
+            the cheap AI&apos;s bar for &quot;real pain worth pursuing.&quot;
+          </EmptyState>
         ) : (
           <ul>
             {candidates.map((c) => (
@@ -136,14 +149,19 @@ export default async function CandidatesPage({
                       <StatusPill status={c.status} />
                       <span className="font-mono">{c.repo}</span>
                       <span>by {c.author}</span>
-                      <span title="triage score — is this real pain worth spending on?">
+                      <span className="inline-flex items-center gap-1">
                         triage <Score value={c.triage_score} />
+                        <InfoTip term="triage" />
                       </span>
-                      <span title="qualify fit — is VideoDB genuinely the answer?">
+                      <span className="inline-flex items-center gap-1">
                         fit <Score value={c.fit_score} />
+                        <InfoTip term="fit-score" />
                       </span>
                       {c.capability ? (
-                        <span className="rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400">
+                        <span
+                          className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-blue-600 dark:text-blue-400"
+                          title="the VideoDB capability this thread maps to (e.g. transcription, scene search)"
+                        >
                           {c.capability}
                         </span>
                       ) : null}
@@ -158,7 +176,7 @@ export default async function CandidatesPage({
             ))}
           </ul>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }

@@ -1,9 +1,14 @@
+import { Workflow } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
 import { JsonModal } from "@/components/json-modal";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -90,11 +95,34 @@ function columnOf(run: Run): Column {
   }
 }
 
-const COLUMN_META: Record<Column, { label: string; dot: string; hint: string }> = {
-  running: { label: "Running", dot: "bg-blue-500", hint: "actively working a step" },
-  suspended: { label: "Awaiting review", dot: "bg-amber-500", hint: "paused at the human gate" },
-  done: { label: "Done", dot: "bg-emerald-500", hint: "reached a final state" },
-  failed: { label: "Failed", dot: "bg-rose-500", hint: "errored or was cancelled" },
+const COLUMN_META: Record<Column, { label: string; dot: string; hint: string; explain: string }> = {
+  running: {
+    label: "Running",
+    dot: "bg-blue-500",
+    hint: "actively working a step",
+    explain:
+      "The engine is actively working a step right now — searching GitHub, qualifying a candidate, or crafting a reply.",
+  },
+  suspended: {
+    label: "Awaiting review",
+    dot: "bg-amber-500",
+    hint: "paused at the human gate",
+    explain:
+      "Paused at the human gate, waiting for a reviewer. These are exactly the drafts you'll find in the Drafts queue.",
+  },
+  done: {
+    label: "Done",
+    dot: "bg-emerald-500",
+    hint: "reached a final state",
+    explain:
+      "Reached a final state — discovery finished its sweep, or a touch was posted, rejected, or skipped.",
+  },
+  failed: {
+    label: "Failed",
+    dot: "bg-rose-500",
+    hint: "errored or was cancelled",
+    explain: "The run errored or was cancelled before finishing. Check Errors for the cause.",
+  },
 };
 
 const STEP_DOT: Record<string, string> = {
@@ -148,14 +176,21 @@ function RunCard({ run }: { run: Run }) {
   return (
     <div className="space-y-2 rounded-lg border bg-card p-3">
       <div className="flex items-center justify-between gap-2">
-        <span
-          className={`rounded px-1.5 py-0.5 font-mono text-[11px] ${
-            run.workflow_name === "discovery"
-              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-              : "bg-primary/10 text-primary"
-          }`}
-        >
-          {run.workflow_name}
+        <span className="inline-flex items-center gap-1">
+          <span
+            className={`rounded px-1.5 py-0.5 font-mono text-[11px] ${
+              run.workflow_name === "discovery"
+                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                : "bg-primary/10 text-primary"
+            }`}
+          >
+            {run.workflow_name}
+          </span>
+          <InfoTip>
+            {run.workflow_name === "discovery"
+              ? "A discovery run: one sweep of GitHub that finds threads and queues promising candidates. It never pauses."
+              : "A touch run: one candidate's journey from research and qualification to a crafted reply and the human gate. Exactly one pause, for review."}
+          </InfoTip>
         </span>
         <JsonModal title={`run/${run.run_id.slice(0, 8)}`} data={run} />
       </div>
@@ -211,21 +246,30 @@ export default async function RunsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["candidates", "touches", "signals"]} />
-      <div>
-        <h1 className="font-heading text-xl font-semibold tracking-tight">Runs</h1>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Every workflow run the engine has started, newest first. A <em>discovery</em> run sweeps
-          GitHub and enqueues candidates; a <em>touch</em> run carries one candidate from qualify
-          to the human gate — where it pauses until a reviewer decides. Each bar below is one
-          step of that journey.
-        </p>
-      </div>
+      <PageHeader
+        title="Runs"
+        stage="act"
+        description="The control tower. Every workflow run the engine has started, newest first, sorted into four lanes. A discovery run sweeps GitHub and queues up candidates; a touch run carries one candidate from qualify through to the human gate — where it pauses until a reviewer decides. The thin coloured strip on each card is a progress bar: one segment per step, green for done, blue for in-progress, amber for paused."
+        sources={["mastra_workflow_snapshot", "candidates", "signals"]}
+      >
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+          what is a run?
+          <InfoTip term="run-snapshot" />
+        </span>
+      </PageHeader>
 
       {runs.length === 0 ? (
-        <div className="rounded-lg border bg-card px-4 py-8 text-sm text-muted-foreground">
-          No runs yet. Trigger discovery (<code>pnpm --filter agent loop</code>) or the dispatcher
-          (<code>pnpm --filter agent dispatch</code>) to see runs land here.
-        </div>
+        <SectionCard
+          title="Run board"
+          term="run-snapshot"
+          description="Live status of every workflow run, grouped by where it sits."
+        >
+          <EmptyState icon={Workflow} title="No runs yet">
+            Runs appear here as soon as the engine starts working. Trigger a discovery sweep (
+            <code>pnpm --filter agent loop</code>) or the dispatcher (
+            <code>pnpm --filter agent dispatch</code>) to set the first one in motion.
+          </EmptyState>
+        </SectionCard>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {columns.map((col) => {
@@ -237,11 +281,14 @@ export default async function RunsPage() {
                   <span className={`size-2 rounded-full ${meta.dot}`} />
                   <h2 className="text-sm font-medium">{meta.label}</h2>
                   <span className="text-xs tabular-nums text-muted-foreground">{items.length}</span>
-                  <span className="ml-auto text-[11px] text-muted-foreground">{meta.hint}</span>
+                  <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    {meta.hint}
+                    <InfoTip side="bottom">{meta.explain}</InfoTip>
+                  </span>
                 </header>
                 {items.length === 0 ? (
                   <div className="rounded-lg border border-dashed px-3 py-6 text-center text-xs text-muted-foreground">
-                    none
+                    nothing here right now
                   </div>
                 ) : (
                   items.map((run) => <RunCard key={run.run_id} run={run} />)

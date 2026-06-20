@@ -1,11 +1,15 @@
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
 import { JsonModal } from "@/components/json-modal";
-import { PageIntro } from "@/components/page-intro";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
 import { RequeueButton } from "@/components/requeue-button";
+import { SectionCard } from "@/components/section-card";
 import { StatusPill } from "@/components/status-pill";
 import { query } from "@/lib/db";
 
@@ -55,34 +59,52 @@ export default async function ErrorsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["errors", "candidates"]} />
-      <PageIntro title="Errors">
-        Every caught failure from the agent — searches, triage, craft, scorers, posting — lands
-        here with its stack and context. Failures never post anything; a failed candidate can be
-        re-queued, which sends it through every gate (guardrail, human review) again.
-      </PageIntro>
+      <PageHeader
+        title="Errors"
+        stage="ops"
+        description="The system fails visibly, never silently. Every caught failure — a search, triage, craft, a scorer, or posting — lands here with its full context. Nothing is posted as a result of a failure, and a failed candidate can be re-queued, which sends it back through every gate (guardrail, human review) again."
+        sources={["errors", "candidates", "signals"]}
+      />
 
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        {sources.length === 0 ? (
-          <span className="rounded-full border bg-card px-2.5 py-1 text-muted-foreground">
-            no errors recorded
+      <SectionCard
+        title="Errors by source"
+        description="A tally of where failures came from. 'Source' names the step or component that threw — for example a workflow step, the dispatcher, or a scorer."
+        aside={
+          <span className="inline-flex items-center gap-1">
+            all time <InfoTip side="bottom">The system component or workflow step that raised the error — e.g. github-search, triage, craft, a scorer, or the dispatcher. It tells you where to look first.</InfoTip>
           </span>
-        ) : (
-          sources.map((s) => (
-            <span key={s.source} className="rounded-full border bg-card px-2.5 py-1">
-              <span className="font-mono text-rose-600 dark:text-rose-400">{s.source}</span>{" "}
-              <span className="tabular-nums text-muted-foreground">×{s.n}</span>
+        }
+        bodyClassName="px-4 py-3"
+      >
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {sources.length === 0 ? (
+            <span className="rounded-full border bg-card px-2.5 py-1 text-muted-foreground">
+              no errors recorded
             </span>
-          ))
-        )}
-      </div>
-
-      {errors.length === 0 ? (
-        <div className="rounded-lg border bg-card px-4 py-8 text-sm text-muted-foreground">
-          Nothing has failed yet. Errors appear here the moment a workflow step, the dispatcher, or
-          a scorer throws — with stack, context, and a re-queue path for failed candidates.
+          ) : (
+            sources.map((s) => (
+              <span key={s.source} className="rounded-full border bg-card px-2.5 py-1">
+                <span className="font-mono text-rose-600 dark:text-rose-400">{s.source}</span>{" "}
+                <span className="tabular-nums text-muted-foreground">×{s.n}</span>
+              </span>
+            ))
+          )}
         </div>
-      ) : (
-        <ul className="space-y-3">
+      </SectionCard>
+
+      <SectionCard
+        title="Recent failures"
+        description="The 100 most recent caught failures, newest first. Each keeps its message, stack, and context, and links back to the candidate it belongs to. Failed candidates carry a re-queue button."
+        aside="latest 100"
+        bodyClassName="p-4"
+      >
+        {errors.length === 0 ? (
+          <EmptyState icon={ShieldCheck} title="Nothing has failed yet">
+            Errors appear here the moment a workflow step, the dispatcher, or a scorer throws —
+            with stack, context, and a re-queue path for failed candidates.
+          </EmptyState>
+        ) : (
+          <ul className="space-y-3">
           {errors.map((e) => (
             <li key={e.id} className="space-y-2 rounded-lg border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
@@ -129,6 +151,7 @@ export default async function ErrorsPage() {
           ))}
         </ul>
       )}
+      </SectionCard>
     </div>
   );
 }

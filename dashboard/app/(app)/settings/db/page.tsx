@@ -1,8 +1,13 @@
+import { ScrollText } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -54,32 +59,38 @@ export default async function DbSettingsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange />
-      <div>
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">Database</h1>
-          <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
-            ← Models
-          </Link>
-        </div>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          A live look inside the database: every table, its row count, and whether it pushes
-          changes to this dashboard in real time. Below, the audit trail — every decision,
-          kill-switch flip, and deletion the system records, newest first.
-        </p>
-      </div>
+      <PageHeader
+        title="Database"
+        stage="ops"
+        description="A live look inside the database that backs the whole system. The table below lists every table with how many rows it holds and whether it pushes its changes to this dashboard in real time. Underneath sits the audit trail — a tamper-evident record of who did what."
+        sources={["pg_class", "pg_stat_user_tables", "audit_log"]}
+      >
+        <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
+          ← Settings
+        </Link>
+      </PageHeader>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Tables</h2>
-          <span className="text-xs text-muted-foreground">public schema</span>
-        </header>
+      <SectionCard
+        title="Tables"
+        description="Every table in the database, with its column count, an approximate live row count, and whether it has a NOTIFY trigger that tells this dashboard to refresh the moment its data changes."
+        aside="public schema"
+        bodyClassName=""
+      >
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">
               <th className="px-4 py-2 font-medium">Table</th>
               <th className="px-4 py-2 text-right font-medium">Columns</th>
               <th className="px-4 py-2 text-right font-medium">Rows</th>
-              <th className="px-4 py-2 text-right font-medium">NOTIFY</th>
+              <th className="px-4 py-2 text-right font-medium">
+                <span className="inline-flex items-center gap-1">
+                  NOTIFY
+                  <InfoTip>
+                    A green dot means this table has a trigger that pings the dashboard the instant
+                    its rows change, so the view updates live without a manual refresh.
+                  </InfoTip>
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -100,17 +111,26 @@ export default async function DbSettingsPage() {
             ))}
           </tbody>
         </table>
-      </section>
+      </SectionCard>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Audit log</h2>
-          <span className="text-xs text-muted-foreground">last 25 entries</span>
-        </header>
+      <SectionCard
+        title="Audit log"
+        description="The system's diary of who did what: every reviewer decision, kill-switch flip, and deletion, recorded as it happens and shown newest first. It's the accountability record that proves a human stayed in control."
+        aside={
+          <span className="inline-flex items-center gap-1">
+            last 25 entries
+            <InfoTip>
+              An audit log is an append-only history of important actions — who did it, what they
+              did, and when — kept so nothing significant happens without a trace.
+            </InfoTip>
+          </span>
+        }
+        bodyClassName=""
+      >
         {audit.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-muted-foreground">
-            No audit entries yet. Decisions, kill-switch flips, and deletions land here.
-          </div>
+          <EmptyState icon={ScrollText} title="No audit entries yet">
+            Reviewer decisions, kill-switch flips, and deletions are recorded here as they happen.
+          </EmptyState>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -141,7 +161,7 @@ export default async function DbSettingsPage() {
             </tbody>
           </table>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }

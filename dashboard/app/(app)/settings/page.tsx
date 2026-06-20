@@ -1,6 +1,9 @@
+import { Database, GitBranch, Shield } from "lucide-react";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/page-header";
 import { PingButton } from "@/components/ping-button";
+import { SectionCard } from "@/components/section-card";
 import { providerCredentials, summarizeModel } from "@/lib/server/models";
 
 export const dynamic = "force-dynamic";
@@ -15,35 +18,65 @@ export default function SettingsPage() {
   const models = [summarizeModel("cheap"), summarizeModel("strong")];
   const credentials = providerCredentials();
 
+  const subPages = [
+    {
+      href: "/settings/github",
+      icon: GitBranch,
+      title: "GitHub budgets",
+      blurb: "How much GitHub API headroom is left right now, read live from GitHub's own responses.",
+    },
+    {
+      href: "/settings/db",
+      icon: Database,
+      title: "Database",
+      blurb: "Every table with its row counts, plus the audit trail of who did what.",
+    },
+    {
+      href: "/settings/data",
+      icon: Shield,
+      title: "Data & retention",
+      blurb: "What public data we keep, the automatic purge, and how to forget a user entirely.",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">Settings</h1>
-          <Link href="/settings/db" className="text-xs text-muted-foreground hover:text-foreground">
-            Database →
-          </Link>
-          <Link
-            href="/settings/github"
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            GitHub →
-          </Link>
-          <Link
-            href="/settings/data"
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Data →
-          </Link>
-        </div>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Which AI models the agent runs on, and whether their credentials are in place. Two
-          tiers: a cheap model handles high-volume triage; a strong model makes the judgment
-          calls (qualify + craft). Both are swappable via <code>.env</code> — no code changes.
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        stage="ops"
+        description="The operator's toolbox. This page shows which AI models the agent runs on and whether their credentials are in place; the cards below open the rest of the controls — GitHub limits, database health, and privacy. Everything here is configured via .env, with no code changes."
+        sources={["settings", "audit_log"]}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <SectionCard
+        title="More controls"
+        description="The rest of the operator settings, each on its own page."
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          {subPages.map((p) => {
+            const Icon = p.icon;
+            return (
+              <Link
+                key={p.href}
+                href={p.href}
+                className="surface flex flex-col gap-1.5 px-3.5 py-3 transition-colors hover:border-primary/40"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <Icon className="size-4 text-primary/70" />
+                  {p.title}
+                </span>
+                <span className="text-xs leading-relaxed text-muted-foreground">{p.blurb}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="AI models"
+        description="Two tiers run the agent: a cheap model handles high-volume triage; a strong model makes the judgment calls (qualify + craft). Each card shows the configured model and whether its API key is present. Both are swappable via .env."
+        bodyClassName="grid gap-4 p-4 lg:grid-cols-2"
+      >
         {models.map((m) => (
           <section key={m.tier} className="rounded-lg border bg-card">
             <header className="flex items-center justify-between border-b px-4 py-2.5">
@@ -91,13 +124,14 @@ export default function SettingsPage() {
             </div>
           </section>
         ))}
-      </div>
+      </SectionCard>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Provider credentials</h2>
-          <span className="text-xs text-muted-foreground">presence only — values never shown</span>
-        </header>
+      <SectionCard
+        title="Provider credentials"
+        description="A quick presence check across every provider the model router can reach. Green means an API key is set in the environment; the actual values are never read or shown. Use Ping to confirm the key actually works."
+        aside="presence only — values never shown"
+        bodyClassName=""
+      >
         <table className="w-full text-sm">
           <tbody>
             {credentials.map((c) => (
@@ -129,7 +163,7 @@ export default function SettingsPage() {
             ))}
           </tbody>
         </table>
-      </section>
+      </SectionCard>
     </div>
   );
 }

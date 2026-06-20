@@ -1,9 +1,15 @@
+import { CircleDollarSign, Hash, Wallet } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
 import { JsonModal } from "@/components/json-modal";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { SectionCard } from "@/components/section-card";
+import { StatCard } from "@/components/stat-card";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -165,71 +171,92 @@ export default async function CostsPage() {
     loadEvents(),
   ]);
 
-  const cards = [
-    { label: "Last 24h", value: usd(summary.last24h), hint: "Rolling 24-hour spend across all providers" },
-    { label: "Last 7 days", value: usd(summary.last7d), hint: "Rolling weekly spend — watch the trend, not the day" },
-    { label: "All time", value: usd(summary.total), hint: "Everything this agent has ever spent" },
-    { label: "Paid calls", value: String(summary.events), hint: "Count of individual metered API calls" },
-  ];
-
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["cost_events"]} />
-      <div>
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">Costs</h1>
-          <Link
-            href="/costs/retrieval"
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Retrieval →
-          </Link>
-        </div>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Every paid call the system makes — model inference, embeddings, web research — is
-          metered here the moment it happens. This feeds the headline metric: how much it costs
-          to activate one developer. By design, money is only spent on a thread after cheap
-          triage says it&apos;s worth it.
-        </p>
-      </div>
+      <PageHeader
+        title="Costs"
+        stage="observe"
+        description="Every penny is metered the moment it's spent — model calls, embeddings, and paid web research. This is the 'money spent' half of cost per activated developer, so the metric is measured, never estimated. By design, money is only ever spent on a thread after cheap triage says it's worth it."
+        sources={["cost_events"]}
+      >
+        <Link
+          href="/costs/retrieval"
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Retrieval →
+        </Link>
+      </PageHeader>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((c) => (
-          <section key={c.label} className="rounded-lg border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">{c.label}</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums">{c.value}</p>
-            <p className="mt-1 text-[11px] leading-snug text-muted-foreground/80">{c.hint}</p>
-          </section>
-        ))}
+        <StatCard
+          label="Last 24h"
+          icon={Wallet}
+          term="cost-event"
+          source="Σ cost_events (24h)"
+          value={usd(summary.last24h)}
+          hint="Total metered spend across every provider in the last rolling 24 hours."
+        />
+        <StatCard
+          label="Last 7 days"
+          icon={Wallet}
+          term="cost-event"
+          source="Σ cost_events (7d)"
+          value={usd(summary.last7d)}
+          hint="Rolling weekly spend — watch the trend, not any single day."
+        />
+        <StatCard
+          label="All time"
+          icon={CircleDollarSign}
+          term="cost-event"
+          source="Σ cost_events"
+          value={usd(summary.total)}
+          hint="Everything this agent has ever spent — the numerator of cost per activated developer."
+        />
+        <StatCard
+          label="Paid calls"
+          icon={Hash}
+          term="cost-event"
+          source="count(cost_events)"
+          value={String(summary.events)}
+          hint="How many individual paid calls were metered. One row is recorded the moment each call is made."
+        />
       </div>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Daily spend by provider</h2>
-          <span className="text-xs text-muted-foreground">last 14 days</span>
-        </header>
-        <div className="px-4 py-4">
-          {daily.length === 0 ? (
-            <p className="py-4 text-sm text-muted-foreground">
-              No spend recorded yet. Paid calls (LLM, embedding, search, enrich) appear here live.
-            </p>
-          ) : (
-            <DailyChart rows={daily} />
-          )}
-        </div>
-      </section>
+      <SectionCard
+        title="Daily spend by provider"
+        term="cost-event"
+        description="What we spent each day, stacked by provider (the AI model or research service that charged us). Hover a bar for that day's total."
+        aside="last 14 days · UTC"
+        bodyClassName="px-4 py-4"
+      >
+        {daily.length === 0 ? (
+          <EmptyState icon={Wallet} title="No spend recorded yet">
+            Paid calls — model inference, embeddings, search, and enrichment — appear here live as
+            soon as the system makes them.
+          </EmptyState>
+        ) : (
+          <DailyChart rows={daily} />
+        )}
+      </SectionCard>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-lg border bg-card">
-          <header className="flex items-center justify-between border-b px-4 py-2.5">
-            <h2 className="text-sm font-medium">Spend per candidate</h2>
-            <span className="text-xs text-muted-foreground">top 20</span>
-          </header>
+        <SectionCard
+          title="Spend per candidate"
+          term="candidate"
+          description="How much we spent chasing each developer's thread. Money is only ever spent on a candidate after triage passes — enrich, qualify, and craft are the paid steps."
+          aside={
+            <span className="inline-flex items-center gap-1">
+              top 20 <InfoTip term="retrieval" />
+            </span>
+          }
+          bodyClassName=""
+        >
           {candidateSpend.length === 0 ? (
-            <div className="px-4 py-8 text-sm text-muted-foreground">
-              No per-candidate spend yet — money is only spent after triage passes (enrich,
-              qualify, craft).
-            </div>
+            <EmptyState title="No per-candidate spend yet">
+              Money is only spent after triage passes (enrich, qualify, craft). Once a candidate
+              reaches those steps, its running cost shows up here.
+            </EmptyState>
           ) : (
             <table className="w-full text-sm">
               <thead>
@@ -244,21 +271,26 @@ export default async function CostsPage() {
                   <tr key={c.candidate_id} className="border-b last:border-b-0">
                     <td className="px-4 py-2 font-mono text-xs">{c.candidate_id.slice(0, 8)}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{c.calls}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{usd(c.spend)}</td>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums">{usd(c.spend)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-        </section>
+        </SectionCard>
 
-        <section className="rounded-lg border bg-card">
-          <header className="flex items-center justify-between border-b px-4 py-2.5">
-            <h2 className="text-sm font-medium">Recent events</h2>
-            <span className="text-xs text-muted-foreground">last 50</span>
-          </header>
+        <SectionCard
+          title="Recent events"
+          term="cost-event"
+          description="The raw spend log — one row per paid call, newest first. Each row shows the provider, what kind of call it was, token counts, and the exact cost."
+          aside="last 50"
+          bodyClassName=""
+        >
           {events.length === 0 ? (
-            <div className="px-4 py-8 text-sm text-muted-foreground">No cost events yet.</div>
+            <EmptyState icon={CircleDollarSign} title="No cost events yet">
+              Each paid call is logged here the instant it happens — that&apos;s what makes the cost
+              metric measured rather than guessed.
+            </EmptyState>
           ) : (
             <ul>
               {events.map((e) => (
@@ -284,14 +316,14 @@ export default async function CostsPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="tabular-nums text-xs">{usd(e.cost_usd)}</span>
+                    <span className="font-mono text-xs tabular-nums">{usd(e.cost_usd)}</span>
                     <JsonModal title={`cost_events/${e.id.slice(0, 8)}`} data={e} />
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </SectionCard>
       </div>
     </div>
   );

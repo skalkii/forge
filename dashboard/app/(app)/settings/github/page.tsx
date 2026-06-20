@@ -1,8 +1,13 @@
+import { GitBranch } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -105,42 +110,48 @@ export default async function GithubSettingsPage() {
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["github_requests"]} />
-      <div>
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">GitHub budgets</h1>
-          <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
-            ← Models
-          </Link>
-        </div>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          How much GitHub API headroom we have right now. GitHub gives two separate allowances —
-          a small one for search (what discovery uses) and a large one for everything else. Both
-          gauges read the live values GitHub returns with every response, never assumptions.
-        </p>
-      </div>
+      <PageHeader
+        title="GitHub budgets"
+        stage="ops"
+        description="GitHub limits how often you can call it, and it counts searching separately from everything else: a small allowance for search (what discovery uses to find threads) and a large one for the rest. We track both live — read from the headers GitHub returns with every response — so the agent always stays a polite, low-frequency guest and never gets rate-limited by surprise."
+        sources={["github_requests"]}
+      >
+        <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground">
+          ← Settings
+        </Link>
+      </PageHeader>
 
-      {budgets.length === 0 ? (
-        <div className="rounded-lg border bg-card px-4 py-8 text-sm text-muted-foreground">
-          No GitHub requests logged yet. Budgets appear after the first call through the
-          github-client (discovery run or manual search).
-        </div>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {budgets.map((b) => (
-            <BudgetGauge key={b.resource} b={b} />
-          ))}
-        </div>
-      )}
-
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Request log</h2>
-          <span className="text-xs text-muted-foreground">last 1h · max 50</span>
-        </header>
-        {requests.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-muted-foreground">
-            No requests in the last hour.
+      <SectionCard
+        title="Live rate budgets"
+        description="How much headroom is left in each of GitHub's two allowances right now. Green is plenty, amber is getting low, red means nearly exhausted — at which point the agent waits for the window to reset rather than push through."
+        term="rate-budget"
+        aside={<InfoTip term="rate-budget" />}
+        bodyClassName="p-4"
+      >
+        {budgets.length === 0 ? (
+          <EmptyState icon={GitBranch} title="No GitHub requests logged yet">
+            Budgets appear after the first call through the github-client — a discovery run or a
+            manual search.
+          </EmptyState>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {budgets.map((b) => (
+              <BudgetGauge key={b.resource} b={b} />
+            ))}
           </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
+        title="Request log"
+        description="The most recent calls the agent made to GitHub, with the rate budget remaining at the time of each one. A quick way to confirm the agent is pacing itself and that requests are succeeding."
+        aside="last 1h · max 50"
+        bodyClassName=""
+      >
+        {requests.length === 0 ? (
+          <EmptyState icon={GitBranch} title="No requests in the last hour">
+            Each call the agent makes to GitHub is logged here with its status, budget, and latency.
+          </EmptyState>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -193,7 +204,7 @@ export default async function GithubSettingsPage() {
             </tbody>
           </table>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }

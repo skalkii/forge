@@ -1,9 +1,13 @@
+import { Radar } from "lucide-react";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/empty-state";
+import { InfoTip } from "@/components/info-tip";
 import { JsonModal } from "@/components/json-modal";
-import { PageIntro } from "@/components/page-intro";
+import { PageHeader } from "@/components/page-header";
 import { RefreshOnChange } from "@/components/refresh-on-change";
 import { RelTime } from "@/components/rel-time";
+import { SectionCard } from "@/components/section-card";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -82,57 +86,69 @@ export default async function SignalsPage({
   return (
     <div className="space-y-6">
       <RefreshOnChange tables={["signals"]} />
-      <PageIntro title="Signals">
-        Everything discovery found on GitHub, before any judgment is applied — one row per thread.
-        We keep only the minimum needed to act: username, link, repo, and the matched excerpt.
-        Near-duplicates are folded under the first sighting. New finds appear here live.
-      </PageIntro>
+      <PageHeader
+        title="Signals"
+        stage="sense"
+        description="Every GitHub thread discovery found, before any AI judged it. We keep only the public minimum — username, link, repo, and the matched excerpt — and near-duplicates are folded under their first sighting so we never chase the same problem twice. New finds appear here live."
+        sources={["signals"]}
+      />
 
-      <form className="flex flex-wrap items-end gap-3" method="get">
-        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-          Strategy query
-          <select
-            name="q"
-            defaultValue={q ?? ""}
-            className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground"
+      <SectionCard
+        title="Filter the feed"
+        description="Narrow the list by the search query that surfaced a thread, or by the repository it lives in."
+      >
+        <form className="flex flex-wrap items-end gap-3" method="get">
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              Strategy query
+              <InfoTip>
+                One of the saved GitHub searches the system runs to find people stuck on video
+                problems. Picking one shows only the threads it surfaced.
+              </InfoTip>
+            </span>
+            <select
+              name="q"
+              defaultValue={q ?? ""}
+              className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground"
+            >
+              <option value="">all queries</option>
+              {queries.map((row) => (
+                <option key={row.query} value={row.query}>
+                  {row.query.slice(0, 60)} ({row.n})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Repo contains
+            <input
+              name="repo"
+              defaultValue={repo ?? ""}
+              placeholder="owner/name"
+              className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground"
+            />
+          </label>
+          <button
+            type="submit"
+            className="rounded-md border bg-card px-3 py-1.5 text-sm hover:bg-accent"
           >
-            <option value="">all queries</option>
-            {queries.map((row) => (
-              <option key={row.query} value={row.query}>
-                {row.query.slice(0, 60)} ({row.n})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-          Repo contains
-          <input
-            name="repo"
-            defaultValue={repo ?? ""}
-            placeholder="owner/name"
-            className="rounded-md border bg-card px-2 py-1.5 text-sm text-foreground"
-          />
-        </label>
-        <button
-          type="submit"
-          className="rounded-md border bg-card px-3 py-1.5 text-sm hover:bg-accent"
-        >
-          Filter
-        </button>
-      </form>
+            Filter
+          </button>
+        </form>
+      </SectionCard>
 
-      <section className="rounded-lg border bg-card">
-        <header className="flex items-center justify-between border-b px-4 py-2.5">
-          <h2 className="text-sm font-medium">Feed</h2>
-          <span className="text-xs text-muted-foreground">
-            {signals.length} shown · newest first
-          </span>
-        </header>
+      <SectionCard
+        title="Feed"
+        term="signal"
+        description="One row per GitHub thread, newest first. Click the title to read it on GitHub, or open the raw record to see exactly what we stored."
+        aside={`${signals.length} shown · newest first`}
+        bodyClassName=""
+      >
         {signals.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-muted-foreground">
-            No signals{q || repo ? " match the filter" : " yet"}. Discovery runs write here; trigger
-            one with <code>pnpm --filter agent loop</code>.
-          </div>
+          <EmptyState icon={Radar} title={`No signals${q || repo ? " match this filter" : " yet"}`}>
+            Discovery runs write threads here as it finds them. Trigger one manually with{" "}
+            <code className="font-mono">pnpm --filter agent loop</code>.
+          </EmptyState>
         ) : (
           <ul>
             {signals.map((s) => (
@@ -159,18 +175,21 @@ export default async function SignalsPage({
                         {s.query}
                       </span>
                       {!s.embedded && (
-                        <span
-                          className="rounded bg-muted px-1.5 py-0.5"
-                          title="not yet embedded — dedup pending"
-                        >
+                        <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5">
                           pending dedup
+                          <InfoTip>
+                            We haven&apos;t yet turned this thread&apos;s text into &quot;meaning
+                            numbers&quot; to compare it against others, so its duplicate check is
+                            still pending.
+                          </InfoTip>
                         </span>
                       )}
                     </div>
                     {s.dups.length > 0 && (
                       <details className="mt-2">
-                        <summary className="cursor-pointer text-[11px] text-amber-600 dark:text-amber-400">
+                        <summary className="inline-flex cursor-pointer items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
                           {s.dups.length} near-duplicate{s.dups.length > 1 ? "s" : ""} collapsed
+                          <InfoTip term="dedup" />
                         </summary>
                         <ul className="mt-1.5 space-y-1 border-l-2 border-amber-500/30 pl-3">
                           {s.dups.map((d) => (
@@ -198,7 +217,7 @@ export default async function SignalsPage({
             ))}
           </ul>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }
