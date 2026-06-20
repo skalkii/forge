@@ -33,6 +33,26 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
   return out;
 }
 
+/**
+ * Release the onnxruntime session held by the fastembed singleton. Call before
+ * a short-lived script exits: onnxruntime-node 1.21's native session destructor
+ * aborts (`mutex lock failed`, exit 134) if it runs during `process.exit()`
+ * teardown instead of being disposed first. fastembed exposes no public dispose,
+ * so reach the (runtime-visible, TS-private) ORT `session` and release it.
+ */
+export async function disposeEmbedder(): Promise<void> {
+  if (!embedder) return;
+  try {
+    const model = await embedder;
+    const session = (model as unknown as { session?: { release?: () => Promise<void> } }).session;
+    await session?.release?.();
+  } catch {
+    // best-effort: a failed release must never mask the script's real result
+  } finally {
+    embedder = undefined;
+  }
+}
+
 export interface DedupResult {
   embedded: number;
   duplicates: number;
